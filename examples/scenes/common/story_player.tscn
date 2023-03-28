@@ -1,6 +1,7 @@
-[gd_scene load_steps=9 format=3 uid="uid://d3f24dvroviij"]
+[gd_scene load_steps=10 format=3 uid="uid://d3f24dvroviij"]
 
 [ext_resource type="Script" path="res://examples/scenes/common/story_player.gd" id="1"]
+[ext_resource type="Resource" uid="uid://cykl80l7yvs7d" path="res://examples/ink/the_intercept/the_intercept.ink.json" id="2_f1404"]
 [ext_resource type="Texture2D" uid="uid://d0agoi408105j" path="res://examples/images/transparent.png" id="5"]
 
 [sub_resource type="StyleBoxFlat" id="1"]
@@ -34,7 +35,11 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 1.0
 offset_right = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1")
+ink_file = ExtResource("2_f1404")
+title = "The Intercept"
 bind_externals = true
 
 [node name="ColorRect" type="ColorRect" parent="."]

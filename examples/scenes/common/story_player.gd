@@ -54,10 +54,7 @@ var _ink_player = InkPlayerFactory.create()
 # Node
 # ############################################################################ #
 
-@onready var _story_margin_container = $StoryMarginContainer
 @onready var _story_vbox_container = $StoryMarginContainer/StoryScrollContainer/StoryVBoxContainer
-@onready var _loading_animation_player = $LoadingAnimationPlayer
-@onready var _title_label = $LoadingAnimationPlayer/CenterContainer/VBoxContainer/TitleLabel
 
 
 # ############################################################################ #
