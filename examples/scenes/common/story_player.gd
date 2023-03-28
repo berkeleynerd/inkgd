@@ -112,7 +112,6 @@ func _loaded(successfully: bool):
 	_bind_externals()
 	_evaluate_functions()
 	_continue_story()
-	_remove_loading_overlay()
 
 
 func _continued(text, _tags):
@@ -183,9 +182,6 @@ func _override_story():
 	if ink_file != null:
 		_ink_player.ink_file = ink_file
 
-	if !title.is_empty():
-		_title_label.text = title
-
 
 func _should_show_debug_menu(debug):
 	# Contrived external function example, where
@@ -223,13 +219,6 @@ func _evaluate_functions():
 			"function 'test_function_output': [Text Output: '%s'] [Return Value: %s]" % \
 			[result_output.text_output.replace("\n", "\\n"), result_output.return_value]
 	)
-
-
-func _remove_loading_overlay():
-	remove_child(_loading_animation_player)
-	_story_margin_container.show()
-	_loading_animation_player.queue_free()
-	_loading_animation_player = null
 
 
 func _connect_signals():

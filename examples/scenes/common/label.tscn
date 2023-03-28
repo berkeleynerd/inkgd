@@ -1,13 +1,8 @@
-[gd_scene load_steps=2 format=2]
-
-[ext_resource path="res://examples/fonts/Vollkorn-Regular.tres" type="FontFile" id=1]
+[gd_scene format=3 uid="uid://dau68xuo6nb2l"]
 
 [node name="Label" type="Label"]
 offset_top = 1.94104
 offset_right = 77.0
 offset_bottom = 47.941
-theme_override_fonts/font = ExtResource( 1 )
-theme_override_colors/font_color = Color( 0, 0, 0, 1 )
+theme_override_colors/font_color = Color(0, 0, 0, 1)
 text = "Label"
-align = 1
-autowrap = true
