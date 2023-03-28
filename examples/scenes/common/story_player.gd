@@ -54,6 +54,8 @@ var _ink_player = InkPlayerFactory.create()
 # ############################################################################ #
 
 @onready var _story_vbox_container = $StoryMarginContainer/StoryScrollContainer/StoryVBoxContainer
+@onready var _story_scroll_container = $StoryMarginContainer/StoryScrollContainer
+@onready var _scrollbar = _story_scroll_container.get_v_scroll_bar()
 
 
 # ############################################################################ #
@@ -62,6 +64,7 @@ var _ink_player = InkPlayerFactory.create()
 
 func _ready():
 	add_child(_ink_player)
+	_scrollbar.changed.connect(handle_scrollbar_changed)
 
 	# Again, if you're just trying to figure out how to use
 	# inkgd, you can ignore this call.
@@ -78,6 +81,9 @@ func _ready():
 # ############################################################################ #
 # Private Methods
 # ############################################################################ #
+
+func handle_scrollbar_changed():
+	_story_scroll_container.scroll_vertical = _scrollbar.max_value
 
 func _continue_story():
 	if USE_SIGNALS:

@@ -49,7 +49,3 @@ do_not_use_mono_runtime=false
 [network]
 
 limits/debugger/max_chars_per_second=600000
-
-[rendering]
-
-environment/defaults/default_environment="res://default_env.tres"
