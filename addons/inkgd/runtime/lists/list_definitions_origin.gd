@@ -1,5 +1,3 @@
-# warning-ignore-all:shadowed_variable
-# warning-ignore-all:unused_class_variable
 # ############################################################################ #
 # Copyright © 2015-2021 inkle Ltd.
 # Copyright © 2019-2022 Frédéric Maquin <fred@ephread.com>
@@ -14,18 +12,9 @@ extends InkObject
 class_name InkListDefinitionsOrigin
 
 # ############################################################################ #
-# Imports
-# ############################################################################ #
-
-var InkTryGetResult = preload("res://addons/inkgd/runtime/extra/try_get_result.gd")
-var InkListItem = preload("res://addons/inkgd/runtime/lists/structs/ink_list_item.gd")
-
-var InkListValue = load("res://addons/inkgd/runtime/values/list_value.gd")
-
-# ############################################################################ #
 
 # Array<InkListDefinition>
-var lists: Array setget , get_lists
+var lists: Array: get = get_lists
 func get_lists() -> Array:
 	var list_of_lists = []
 	for named_list_key in _lists:
@@ -75,13 +64,3 @@ func find_single_item_list_with_name(name: String) -> InkListValue:
 
 var _lists: Dictionary # Dictionary<String, InkListDefinition>
 var _all_unambiguous_list_value_cache: Dictionary # Dictionary<String, InkListValue>
-
-# ############################################################################ #
-# GDScript extra methods
-# ############################################################################ #
-
-func is_class(type: String) -> bool:
-	return type == "InkListDefinitionsOrigin" || .is_class(type)
-
-func get_class() -> String:
-	return "InkListDefinitionsOrigin"

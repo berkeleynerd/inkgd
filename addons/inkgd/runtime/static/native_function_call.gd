@@ -1,4 +1,3 @@
-# warning-ignore-all:unused_class_variable
 # ############################################################################ #
 # Copyright © 2015-2021 inkle Ltd.
 # Copyright © 2019-2022 Frédéric Maquin <fred@ephread.com>
@@ -8,7 +7,7 @@
 # inkgd is licensed under the terms of the MIT license.
 # ############################################################################ #
 
-extends Reference
+extends RefCounted
 
 class_name InkStaticNativeFunctionCall
 
@@ -17,9 +16,6 @@ class_name InkStaticNativeFunctionCall
 # ############################################################################ #
 
 const ValueType = preload("res://addons/inkgd/runtime/values/value_type.gd").ValueType
-
-static func InkNativeFunctionCall():
-	return load("res://addons/inkgd/runtime/content/native_function_call.gd")
 
 # ############################################################################ #
 
@@ -157,9 +153,9 @@ func generate_native_functions_if_necessary():
 		add_list_unary_op (VALUE_OF_LIST,           "list_unary_op_value_of_list")
 
 		add_op_to_native_func(EQUALS, 2, ValueType.DIVERT_TARGET,
-							  "native_func_divert_targets_equal")
+							"native_func_divert_targets_equal")
 		add_op_to_native_func(NOT_EQUALS, 2, ValueType.DIVERT_TARGET,
-							  "native_func_divert_targets_not_equal")
+							"native_func_divert_targets_not_equal")
 
 # (String, int, ValueType, Variant)
 func add_op_to_native_func(name, args, val_type, op):
@@ -167,7 +163,7 @@ func add_op_to_native_func(name, args, val_type, op):
 	if native_functions.has(name):
 		native_func = native_functions[name]
 	else:
-		native_func = InkNativeFunctionCall().new_with_name_and_number_of_parameters(name, args)
+		native_func = InkNativeFunctionCall.new_with_name_and_number_of_parameters(name, args)
 		native_functions[name] = native_func
 
 	native_func.add_op_func_for_type(val_type, op)

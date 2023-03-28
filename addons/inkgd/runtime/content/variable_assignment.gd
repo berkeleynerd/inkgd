@@ -1,5 +1,3 @@
-# warning-ignore-all:shadowed_variable
-# warning-ignore-all:unused_class_variable
 # ############################################################################ #
 # Copyright © 2015-2021 inkle Ltd.
 # Copyright © 2019-2022 Frédéric Maquin <fred@ephread.com>
@@ -12,13 +10,6 @@
 extends InkObject
 
 class_name InkVariableAssignment
-
-# ############################################################################ #
-# Self-reference
-# ############################################################################ #
-
-static func InkVariableAssignment() -> GDScript:
-	return load("res://addons/inkgd/runtime/content/variable_assignment.gd") as GDScript
 
 # ############################################################################ #
 
@@ -42,17 +33,11 @@ func _to_string() -> String:
 # GDScript extra methods
 # ############################################################################ #
 
-func is_class(type: String) -> bool:
-	return type == "VariableAssignment" || .is_class(type)
-
-func get_class() -> String:
-	return "VariableAssignment"
-
 # (String?, bool) -> InkVariableAssignment
 static func new_with(
 		variable_name: String,
 		is_new_declaration: bool
 ) -> InkVariableAssignment:
-	var variable_assignment = InkVariableAssignment().new()
+	var variable_assignment = InkVariableAssignment.new()
 	variable_assignment._init_with(variable_name, is_new_declaration)
 	return variable_assignment

@@ -1,5 +1,3 @@
-# warning-ignore-all:unused_class_variable
-# warning-ignore-all:shadowed_variable
 # ############################################################################ #
 # Copyright © 2015-2021 inkle Ltd.
 # Copyright © 2019-2022 Frédéric Maquin <fred@ephread.com>
@@ -16,13 +14,6 @@ extends Node
 # class_name InkRuntimeNode
 
 # Expected to be added to the SceneTree as a singleton object.
-
-# ############################################################################ #
-# Imports
-# ############################################################################ #
-
-var InkStaticJSON := load("res://addons/inkgd/runtime/static/json.gd") as GDScript
-var InkStaticNativeFunctionCall := load("res://addons/inkgd/runtime/static/native_function_call.gd") as GDScript
 
 # ############################################################################ #
 # Signals
@@ -51,7 +42,7 @@ var stop_execution_on_error: bool = true
 
 # ############################################################################ #
 
-var should_pause_execution_on_runtime_error: bool setget set_speore, get_speore
+var should_pause_execution_on_runtime_error: bool: get = get_speore, set = set_speore
 func get_speore() -> bool:
 	printerr(
 			"'should_pause_execution_on_runtime_error' is deprecated, " +
@@ -65,7 +56,7 @@ func set_speore(value: bool):
 	)
 	stop_execution_on_exception = value
 
-var should_pause_execution_on_story_error: bool setget set_speose, get_speose
+var should_pause_execution_on_story_error: bool: get = get_speose, set = set_speose
 func get_speose() -> bool:
 	printerr(
 		"'should_pause_execution_on_story_error' is deprecated, " +
@@ -150,12 +141,13 @@ func handle_story_exception(message: String, use_end_line_number: bool, metadata
 func _handle_generic_exception(
 		message: String,
 		should_pause_execution: bool,
-		stack_trace: PoolStringArray
+		stack_trace: PackedStringArray
 ) -> void:
 	if OS.is_debug_build():
 		if should_pause_execution:
+			@warning_ignore("assert_always_false")
 			assert(false, message)
-		elif Engine.editor_hint:
+		elif Engine.is_editor_hint():
 			printerr(message)
 			if stack_trace.size() > 0:
 				printerr("Stack trace:")
@@ -164,8 +156,8 @@ func _handle_generic_exception(
 		else:
 			push_error(message)
 
-func _get_stack_trace() -> PoolStringArray:
-	var trace := PoolStringArray()
+func _get_stack_trace() -> PackedStringArray:
+	var trace := PackedStringArray()
 
 	var i = 1
 	for stack_element in get_stack():

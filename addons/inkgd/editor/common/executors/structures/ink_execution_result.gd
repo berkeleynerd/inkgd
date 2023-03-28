@@ -4,7 +4,7 @@
 # See LICENSE in the project root for license information.
 # ############################################################################ #
 
-extends Reference
+extends RefCounted
 
 ## A test result, containing information about whether the test
 ## suceeded and the generated output.
@@ -36,8 +36,8 @@ func _init(
 	success: bool,
 	output: String
 ):
-	self.identifier = identifier
-	self.use_threads = use_threads
-	self.user_triggered = user_triggered
-	self.success = success
-	self.output = output
+	identifier = identifier
+	use_threads = use_threads
+	user_triggered = user_triggered
+	success = success
+	output = output

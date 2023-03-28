@@ -18,8 +18,8 @@ var _exception_raised_count = 0
 # ############################################################################ #
 
 func before_each():
-	.before_each()
-	ink_runtime.connect("exception_raised", self, "_exception_raised")
+	super.before_each()
+	ink_runtime.exception_raised.connect(_exception_raised)
 
 
 func after_each():
@@ -28,45 +28,45 @@ func after_each():
 
 	_exception_raised_count = 0
 
-	ink_runtime.disconnect("exception_raised", self, "_exception_raised")
-	.after_each()
+	ink_runtime.exception_raised.disconnect(_exception_raised)
+	super.after_each()
 
 # ############################################################################ #
 
 func test_const():
-	var story = Story.new(load_file("const"))
-	assert_eq(story.continue(), "5\n")
+	var story = InkStory.new(load_file("const"))
+	assert_eq(story.continue_story(), "5\n")
 
 func test_multiple_constant_references():
-	var story = Story.new(load_file("multiple_constant_references"))
+	var story = InkStory.new(load_file("multiple_constant_references"))
 
-	assert_eq(story.continue(), "success\n")
+	assert_eq(story.continue_story(), "success\n")
 
 func test_set_non_existent_variable():
-	var story = Story.new(load_file("set_non_existant_variable"))
+	var story = InkStory.new(load_file("set_non_existant_variable"))
 
-	assert_eq(story.continue(), "Hello world.\n")
+	assert_eq(story.continue_story(), "Hello world.\n")
 
 	story.variables_state.set("y", "earth")
 
 	assert_eq(_exception_raised_count, 1)
 
 func test_temp_global_conflict():
-	var story = Story.new(load_file("temp_global_conflict"))
+	var story = InkStory.new(load_file("temp_global_conflict"))
 
-	assert_eq(story.continue(), "0\n")
+	assert_eq(story.continue_story(), "0\n")
 
 func test_temp_not_found():
-	var story = Story.new(load_file("temp_not_found"))
-	story.connect("on_error", self, "_temp_not_found_on_error")
+	var story = InkStory.new(load_file("temp_not_found"))
+	story.on_error.connect(_temp_not_found_on_error)
 
 	assert_eq(story.continue_maximally(), "0\nhello\n")
 	assert_true(_temp_not_found_had_warning()) # Changed in ink 1.0.0 but kept here for now.
 
 func test_temp_usage_in_options():
-	var story = Story.new(load_file("temp_usage_in_options"))
+	var story = InkStory.new(load_file("temp_usage_in_options"))
 
-	story.continue()
+	story.continue_story()
 
 	assert_eq(story.current_choices.size(), 1)
 	assert_eq(story.current_choices[0].text, "1")
@@ -77,22 +77,22 @@ func test_temp_usage_in_options():
 	assert_eq(story.current_choices.size(), 0)
 
 func test_temporaries_at_global_scope():
-	var story = Story.new(load_file("temporaries_at_global_scope"))
+	var story = InkStory.new(load_file("temporaries_at_global_scope"))
 
-	assert_eq(story.continue(), "54\n")
+	assert_eq(story.continue_story(), "54\n")
 
 func test_variable_declaration_in_conditional():
-	var story = Story.new(load_file("variable_declaration_in_conditional"))
+	var story = InkStory.new(load_file("variable_declaration_in_conditional"))
 
-	assert_eq(story.continue(), "5\n")
+	assert_eq(story.continue_story(), "5\n")
 
 func test_variable_divert_target():
-	var story = Story.new(load_file("variable_divert_target"))
+	var story = InkStory.new(load_file("variable_divert_target"))
 
-	assert_eq(story.continue(), "Here.\n")
+	assert_eq(story.continue_story(), "Here.\n")
 
 func test_variable_get_set_api():
-	var story = Story.new(load_file("variable_get_set_api"))
+	var story = InkStory.new(load_file("variable_get_set_api"))
 
 	assert_eq(story.continue_maximally(), "5\n")
 	assert_eq(story.variables_state.get("x"), 5)
@@ -118,17 +118,17 @@ func test_variable_get_set_api():
 	assert_eq(_exception_raised_count, 1)
 
 func test_variable_pointer_ref_from_knot():
-	var story = Story.new(load_file("variable_pointer_ref_from_knot"))
+	var story = InkStory.new(load_file("variable_pointer_ref_from_knot"))
 
-	assert_eq(story.continue(), "6\n")
+	assert_eq(story.continue_story(), "6\n")
 
 func test_variable_swap_recurse():
-	var story = Story.new(load_file("variable_swap_recurse"))
+	var story = InkStory.new(load_file("variable_swap_recurse"))
 
 	assert_eq(story.continue_maximally(), "1 2\n")
 
 func test_variable_tunnel():
-	var story = Story.new(load_file("variable_tunnel"))
+	var story = InkStory.new(load_file("variable_tunnel"))
 
 	assert_eq(story.continue_maximally(), "STUFF\n")
 

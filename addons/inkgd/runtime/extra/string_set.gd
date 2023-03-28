@@ -13,16 +13,9 @@
 
 # This simple set is designed to hold Strings only.
 
-extends Reference
+extends RefCounted
 
 class_name InkStringSet
-
-# ############################################################################ #
-# Self-reference
-# ############################################################################ #
-
-static func InkStringSet() -> GDScript:
-	return load("res://addons/inkgd/runtime/extra/string_set.gd") as GDScript
 
 # ############################################################################ #
 
@@ -34,15 +27,16 @@ func clear() -> void:
 	_dictionary.clear()
 
 func duplicate() -> InkStringSet:
-	var set = InkStringSet().new()
+	@warning_ignore("shadowed_variable_base_class")
+	var set = InkStringSet.new()
 	set._dictionary = _dictionary.duplicate()
 	return set
 
 func enumerate() -> Array:
 	return _dictionary.keys()
 
-func empty() -> bool:
-	return _dictionary.empty()
+func is_empty() -> bool:
+	return _dictionary.is_empty()
 
 func contains(element: String) -> bool:
 	return _dictionary.has(element)

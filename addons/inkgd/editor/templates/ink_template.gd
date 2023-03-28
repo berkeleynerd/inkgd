@@ -1,12 +1,5 @@
-# warning-ignore-all:return_value_discarded
 
 extends %BASE%
-
-# ############################################################################ #
-# Imports
-# ############################################################################ #
-
-var InkPlayer = load("res://addons/inkgd/ink_player.gd")
 
 # ############################################################################ #
 # Public Nodes
@@ -14,7 +7,7 @@ var InkPlayer = load("res://addons/inkgd/ink_player.gd")
 
 # Alternatively, it could also be retrieved from the tree.
 # onready var _ink_player = $InkPlayer
-onready var _ink_player = InkPlayer.new()
+@onready var _ink_player = InkPlayer.new()
 
 # ############################################################################ #
 # Lifecycle
@@ -32,7 +25,7 @@ func _ready():
 %TS%# don't support threads, the value of this variable is ignored.
 %TS%_ink_player.loads_in_background = true
 
-%TS%_ink_player.connect("loaded", self, "_story_loaded")
+%TS%_ink_player.loaded.connect(_story_loaded)
 
 %TS%# Creates the story. 'loaded' will be emitted once Ink is ready
 %TS%# continue the story.

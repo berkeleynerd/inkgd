@@ -1,10 +1,10 @@
+@tool
 # ############################################################################ #
 # Copyright © 2019-2022 Frédéric Maquin <fred@ephread.com>
 # Licensed under the MIT License.
 # See LICENSE in the project root for license information.
 # ############################################################################ #
 
-tool
 extends EditorPlugin
 
 # Hiding this type to prevent registration of "private" nodes.
@@ -15,18 +15,7 @@ extends EditorPlugin
 # Imports
 # ############################################################################ #
 
-var InkJsonImportPlugin = preload("res://addons/inkgd/editor/import_plugins/ink_json_import_plugin.gd")
-var InkSourceImportPlugin = preload("res://addons/inkgd/editor/import_plugins/ink_source_import_plugin.gd")
-
 var InkBottomPanel = preload("res://addons/inkgd/editor/panel/ink_bottom_panel.tscn")
-
-var InkCSharpValidator = preload("res://addons/inkgd/editor/common/ink_csharp_validator.gd")
-
-var InkEditorInterface = load("res://addons/inkgd/editor/common/ink_editor_interface.gd")
-var InkConfiguration = load("res://addons/inkgd/editor/common/ink_configuration.gd")
-
-var InkCompilationConfiguration = load("res://addons/inkgd/editor/common/executors/structures/ink_compilation_configuration.gd")
-var InkCompiler = load("res://addons/inkgd/editor/common/executors/ink_compiler.gd")
 
 # ############################################################################ #
 # Constant
@@ -46,7 +35,7 @@ var _panel = null
 var _ink_source_import_plugin: InkSourceImportPlugin = null
 var _ink_json_import_plugin: InkJsonImportPlugin = null
 
-var _tool_button: ToolButton = null
+var _tool_button: Button = null
 
 
 # ############################################################################ #
@@ -160,7 +149,7 @@ func _remove_import_plugin():
 
 
 func _add_bottom_panel():
-	_panel = InkBottomPanel.instance()
+	_panel = InkBottomPanel.instantiate()
 	_panel.editor_interface = _editor_interface
 	_panel.configuration = _configuration
 
@@ -184,45 +173,32 @@ func _remove_autoloads():
 
 ## Registers the script templates provided by the plugin.
 func _add_templates():
-	var dir = Directory.new()
 	var names = _get_plugin_templates_names()
 
 	# Setup the templates folder for the project
-	var template_dir_path = ProjectSettings.get_setting("editor/script_templates_search_path")
-	if !dir.dir_exists(template_dir_path):
-		dir.make_dir(template_dir_path)
+	var template_dir_path = ProjectSettings.get_setting("editor/script/templates_search_path")
+	if !DirAccess.dir_exists_absolute(template_dir_path):
+		DirAccess.make_dir_absolute(template_dir_path)
 
 	for name in names:
 		var template_file_path = template_dir_path + "/" + name
-		dir.copy("res://addons/inkgd/editor/templates/" + name, template_file_path)
+		DirAccess.copy_absolute("res://addons/inkgd/editor/templates/" + name, template_file_path)
 
 
 ## Unregisters the script templates provided by the plugin.
 func _remove_templates():
-	var dir = Directory.new()
 	var names = _get_plugin_templates_names()
-	var template_dir_path = ProjectSettings.get_setting("editor/script_templates_search_path")
+	var template_dir_path = ProjectSettings.get_setting("editor/script/templates_search_path")
 
+	var dir = DirAccess.open(template_dir_path)
 	for name in names:
-		var template_file_path = template_dir_path + "/" + name
-		if dir.file_exists(template_file_path):
-			dir.remove(template_file_path)
+		if dir.file_exists(name):
+			dir.remove(name)
 
 
 ## Get all the script templates provided by the plugin.
 func _get_plugin_templates_names() -> Array:
-	var dir = Directory.new()
-	var plugin_template_names = []
-
-	dir.change_dir("res://addons/inkgd/editor/templates/")
-	dir.list_dir_begin(true)
-
-	var temp = dir.get_next()
-	while temp != "":
-		plugin_template_names.append(temp)
-		temp = dir.get_next()
-
-	return plugin_template_names
+	return DirAccess.get_files_at("res://addons/inkgd/editor/templates/")
 
 
 func _register_custom_settings():
@@ -241,7 +217,7 @@ func _register_custom_settings():
 
 func _validate_csproj() -> bool:
 	var project_name = ProjectSettings.get_setting("application/config/name")
-	if project_name.empty():
+	if project_name.is_empty():
 		printerr("[inkgd] [ERROR] The project is missing a name.")
 		return false
 

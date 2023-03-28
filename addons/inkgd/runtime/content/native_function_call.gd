@@ -1,5 +1,3 @@
-# warning-ignore-all:shadowed_variable
-# warning-ignore-all:unused_class_variable
 # ############################################################################ #
 # Copyright © 2015-2021 inkle Ltd.
 # Copyright © 2019-2022 Frédéric Maquin <fred@ephread.com>
@@ -18,32 +16,24 @@ class_name InkNativeFunctionCall
 # ############################################################################ #
 
 const ValueType = preload("res://addons/inkgd/runtime/values/value_type.gd").ValueType
-var InkList := load("res://addons/inkgd/runtime/lists/ink_list.gd") as GDScript
-
-var InkValue := load("res://addons/inkgd/runtime/values/value.gd") as GDScript
-var InkBoolValue := load("res://addons/inkgd/runtime/values/bool_value.gd") as GDScript
-var InkListValue := load("res://addons/inkgd/runtime/values/list_value.gd") as GDScript
-
-static func InkNativeFunctionCall() -> GDScript:
-	return load("res://addons/inkgd/runtime/content/native_function_call.gd") as GDScript
 
 # ############################################################################ #
 
 # (String) -> NativeFunctionCall
 static func call_with_name(function_name) -> InkNativeFunctionCall:
-	return InkNativeFunctionCall().new_with_name(function_name)
+	return InkNativeFunctionCall.new_with_name(function_name)
 
-var name: String setget set_name, get_name
+var name: String: get = get_name, set = set_name
 func get_name() -> String:
 	return _name
 
 func set_name(value: String):
 	_name = value
 	if !_is_prototype:
-		_prototype = self._static_native_function_call.native_functions[_name]
+		_prototype = _static_native_function_call.native_functions[_name]
 var _name
 
-var number_of_parameters: int setget set_number_of_parameters, get_number_of_parameters
+var number_of_parameters: int: get = get_number_of_parameters, set = set_number_of_parameters
 func get_number_of_parameters() -> int:
 	if _prototype:
 		return _prototype.number_of_parameters
@@ -66,21 +56,21 @@ func call_with_parameters(parameters: Array, metadata: StoryErrorMetadata) -> In
 	if _prototype:
 		return _prototype.call_with_parameters(parameters, metadata)
 
-	if self.number_of_parameters != parameters.size():
-		Utils.throw_exception("Unexpected number of parameters")
+	if number_of_parameters != parameters.size():
+		InkUtils.throw_exception("Unexpected number of parameters")
 		return null
 
 	var has_list = false
 	for p in parameters:
-		if Utils.is_ink_class(p, "Void"):
-			Utils.throw_story_exception(
+		if p is InkVoid:
+			InkUtils.throw_story_exception(
 					"Attempting to perform operation on a void value. Did you forget to " +
 					"'return' a value from a function you called here?",
 					false,
 					metadata
 			)
 			return null
-		if Utils.is_ink_class(p, "ListValue"):
+		if p is InkListValue:
 			has_list = true
 
 	if parameters.size() == 2 && has_list:
@@ -118,10 +108,10 @@ func call_coerced(parameters_of_single_type: Array, metadata: StoryErrorMetadata
 		if _operation_funcs.has(val_type):
 			op_for_type = _operation_funcs[val_type]
 		else:
-			var type_name = Utils.value_type_name(val_type)
-			Utils.throw_story_exception(
+			var type_name = InkUtils.value_type_name(val_type)
+			InkUtils.throw_story_exception(
 					"Cannot perform operation '%s' on value of type (%d)" \
-					% [self.name, type_name],
+					% [name, type_name],
 					false,
 					metadata
 			)
@@ -130,15 +120,15 @@ func call_coerced(parameters_of_single_type: Array, metadata: StoryErrorMetadata
 		if param_count == 2:
 			var param2 = parameters_of_single_type[1]
 
-			var result_val = self._static_native_function_call.call(op_for_type, param1.value, param2.value)
+			var result_val = _static_native_function_call.call(op_for_type, param1.value, param2.value)
 
 			return InkValue.create(result_val)
 		else:
-			var result_val = self._static_native_function_call.call(op_for_type, param1.value)
+			var result_val = _static_native_function_call.call(op_for_type, param1.value)
 
 			return InkValue.create(result_val)
 	else:
-		Utils.throw_exception(
+		InkUtils.throw_exception(
 				"Unexpected number of parameters to NativeFunctionCall: %d" % \
 				parameters_of_single_type.size()
 		)
@@ -150,20 +140,20 @@ func call_coerced(parameters_of_single_type: Array, metadata: StoryErrorMetadata
 # doesn't exist in upstream. The metadat are used in case an 'exception'
 # is raised. For more information, see story.gd.
 func call_binary_list_operation(parameters: Array, metadata) -> InkValue:
-	if ((self.name == "+" || self.name == "-") &&
-		Utils.is_ink_class(parameters[0], "ListValue") &&
-		Utils.is_ink_class(parameters [1], "IntValue")
+	if ((name == "+" || name == "-") &&
+		parameters[0] is InkListValue &&
+		parameters [1] is InkIntValue
 	):
 		return call_list_increment_operation(parameters)
 
-	var v1 = Utils.as_or_null(parameters[0], "Value")
-	var v2 = Utils.as_or_null(parameters[1], "Value")
+	var v1 = parameters[0] as InkValue
+	var v2 = parameters[1] as InkValue
 
-	if ((self.name == "&&" || self.name == "||") &&
+	if ((name == "&&" || name == "||") &&
 		(v1.value_type != ValueType.LIST || v2.value_type != ValueType.LIST)
 	):
 		var op: String = _operation_funcs[ValueType.INT]
-		var result = bool(self._static_native_function_call.call(
+		var result = bool(_static_native_function_call.call(
 			"op_for_type",
 			1 if v1.is_truthy else 0,
 			1 if v2.is_truthy else 0
@@ -174,11 +164,11 @@ func call_binary_list_operation(parameters: Array, metadata) -> InkValue:
 	if v1.value_type == ValueType.LIST && v2.value_type == ValueType.LIST:
 		return call_coerced([v1, v2], metadata)
 
-	var v1_type_name = Utils.value_type_name(v1.value_type)
-	var v2_type_name = Utils.value_type_name(v2.value_type)
-	Utils.throw_story_exception(
+	var v1_type_name = InkUtils.value_type_name(v1.value_type)
+	var v2_type_name = InkUtils.value_type_name(v2.value_type)
+	InkUtils.throw_story_exception(
 			"Can not call use '%s' operation on %s and %s" % \
-			[self.name, v1_type_name, v2_type_name],
+			[name, v1_type_name, v2_type_name],
 			false,
 			metadata
 	)
@@ -187,8 +177,8 @@ func call_binary_list_operation(parameters: Array, metadata) -> InkValue:
 
 # (Array<InkObject>) -> Value
 func call_list_increment_operation(list_int_params: Array) -> InkValue:
-	var list_val: InkListValue = Utils.cast(list_int_params[0], "ListValue")
-	var int_val: InkIntValue = Utils.cast(list_int_params [1], "IntValue")
+	var list_val: InkListValue = list_int_params[0]
+	var int_val: InkIntValue = list_int_params[1]
 
 	var result_raw_list = InkList.new()
 
@@ -198,7 +188,7 @@ func call_list_increment_operation(list_int_params: Array) -> InkValue:
 		var int_op: String = _operation_funcs[ValueType.INT]
 
 		var target_int = int(
-				self._static_native_function_call.call(
+				_static_native_function_call.call(
 						int_op,
 						list_item_value,
 						int_val.value
@@ -231,10 +221,10 @@ func coerce_values_to_single_type(parameters_in: Array, metadata):
 	for obj in parameters_in:
 		var val: InkValue = obj
 		if val.value_type > val_type:
-			val_type = val.value_type
+			val_type = val.value_type as ValueType
 
 		if val.value_type == ValueType.LIST:
-			special_case_list = Utils.as_or_null(val, "ListValue")
+			special_case_list = val as InkListValue
 
 	var parameters_out: Array = [] # Array<Value>
 
@@ -251,7 +241,7 @@ func coerce_values_to_single_type(parameters_in: Array, metadata):
 					var casted_value = InkListValue.new_with_single_item(item.result, int_val)
 					parameters_out.append(casted_value)
 				else:
-					Utils.throw_story_exception(
+					InkUtils.throw_story_exception(
 							"Could not find List item with the value %d in %s" \
 							% [int_val, list.name],
 							false,
@@ -260,8 +250,8 @@ func coerce_values_to_single_type(parameters_in: Array, metadata):
 
 					return null
 			else:
-				var type_name = Utils.value_type_name(val.value_type)
-				Utils.throw_story_exception(
+				var type_name = InkUtils.value_type_name(val.value_type)
+				InkUtils.throw_story_exception(
 						"Cannot mix Lists and %s values in this operation" % type_name,
 						false,
 						metadata
@@ -290,7 +280,7 @@ func _init_with_name_and_number_of_parameters(name: String, number_of_parameters
 
 func generate_native_functions_if_necessary() -> void:
 	find_static_objects()
-	self._static_native_function_call.generate_native_functions_if_necessary()
+	_static_native_function_call.generate_native_functions_if_necessary()
 
 # (ValueType, String) -> void
 func add_op_func_for_type(val_type: int, op: String) -> void:
@@ -300,7 +290,7 @@ func add_op_func_for_type(val_type: int, op: String) -> void:
 	_operation_funcs[val_type] = op
 
 func _to_string() -> String:
-	return "Native '%s'" % self.name
+	return "Native '%s'" % name
 
 # NativeFunctionCall
 var _prototype = null
@@ -314,16 +304,9 @@ var _operation_funcs: Dictionary = {}
 # GDScript extra methods
 # ############################################################################ #
 
-func is_class(type):
-	return type == "NativeFunctionCall" || .is_class(type)
-
-func get_class():
-	return "NativeFunctionCall"
-
-var _static_native_function_call: InkStaticNativeFunctionCall setget \
-		 , get_static_native_function_call
-func get_static_native_function_call():
-	return _weak_static_native_function_call.get_ref()
+var _static_native_function_call: InkStaticNativeFunctionCall:
+	get:
+		return _weak_static_native_function_call.get_ref()
 var _weak_static_native_function_call = WeakRef.new()
 
 func find_static_objects():
@@ -334,11 +317,11 @@ func find_static_objects():
 # ############################################################################ #
 
 static func new_with_name(name: String):
-	var native_function_call = InkNativeFunctionCall().new()
+	var native_function_call = InkNativeFunctionCall.new()
 	native_function_call._init_with_name(name)
 	return native_function_call
 
 static func new_with_name_and_number_of_parameters(name: String, number_of_parameters: int):
-	var native_function_call = InkNativeFunctionCall().new()
+	var native_function_call = InkNativeFunctionCall.new()
 	native_function_call._init_with_name_and_number_of_parameters(name, number_of_parameters)
 	return native_function_call

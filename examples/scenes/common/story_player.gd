@@ -1,4 +1,3 @@
-# warning-ignore-all:return_value_discarded
 # ############################################################################ #
 # Copyright © 2019-2022 Frédéric Maquin <fred@ephread.com>
 # Licensed under the MIT License.
@@ -12,13 +11,8 @@ extends Node
 # ############################################################################ #
 
 var ErrorType := preload("res://addons/inkgd/runtime/enums/error.gd").ErrorType
-var InkPlayerFactory := preload("res://addons/inkgd/ink_player_factory.gd") as GDScript
-var InkList := preload("res://addons/inkgd/runtime/lists/ink_list.gd") as GDScript
-
-var ChoiceContainer := load("res://examples/scenes/common/choice_container.tscn") as PackedScene
 var LineLabel := load("res://examples/scenes/common/label.tscn") as PackedScene
-
-var InkGDProfiler := load("res://examples/scenes/common/profiler.gd") as GDScript
+const ChoiceContainerScene = preload("res://examples/scenes/common/choice_container.tscn")
 
 
 # ############################################################################ #
@@ -36,9 +30,9 @@ const USE_SIGNALS = true
 # you can ignore those exports. They just make overriding
 # the story and creating multiple scenes easier.
 # For context, see main.tscn.
-export var ink_file: Resource
-export var title: String
-export var bind_externals: bool = false
+@export var ink_file: Resource
+@export var title: String
+@export var bind_externals: bool = false
 
 
 # ############################################################################ #
@@ -60,10 +54,10 @@ var _ink_player = InkPlayerFactory.create()
 # Node
 # ############################################################################ #
 
-onready var _story_margin_container = $StoryMarginContainer
-onready var _story_vbox_container = $StoryMarginContainer/StoryScrollContainer/StoryVBoxContainer
-onready var _loading_animation_player = $LoadingAnimationPlayer
-onready var _title_label = $LoadingAnimationPlayer/CenterContainer/VBoxContainer/TitleLabel
+@onready var _story_margin_container = $StoryMarginContainer
+@onready var _story_vbox_container = $StoryMarginContainer/StoryScrollContainer/StoryVBoxContainer
+@onready var _loading_animation_player = $LoadingAnimationPlayer
+@onready var _title_label = $LoadingAnimationPlayer/CenterContainer/VBoxContainer/TitleLabel
 
 
 # ############################################################################ #
@@ -121,26 +115,26 @@ func _loaded(successfully: bool):
 	_remove_loading_overlay()
 
 
-func _continued(text, tags):
+func _continued(text, _tags):
 	_add_label(text)
 
 	_ink_player.continue_story()
 
 
 func _add_label(text):
-	var label = LineLabel.instance()
+	var label = LineLabel.instantiate()
 	label.text = text
 
 	_story_vbox_container.add_child(label)
 
 
 func _prompt_choices(choices):
-	if !choices.empty():
-		_current_choice_container = ChoiceContainer.instance()
+	if !choices.is_empty():
+		_current_choice_container = ChoiceContainerScene.instantiate()
 		_story_vbox_container.add_child(_current_choice_container)
 
 		_current_choice_container.create_choices(choices)
-		_current_choice_container.connect("choice_selected", self, "_choice_selected")
+		_current_choice_container.choice_selected.connect(_choice_selected)
 
 
 func _ended():
@@ -189,7 +183,7 @@ func _override_story():
 	if ink_file != null:
 		_ink_player.ink_file = ink_file
 
-	if !title.empty():
+	if !title.is_empty():
 		_title_label.text = title
 
 
@@ -239,13 +233,13 @@ func _remove_loading_overlay():
 
 
 func _connect_signals():
-	_ink_player.connect("loaded", self, "_loaded")
+	_ink_player.loaded.connect(_loaded)
 
 
 func _connect_optional_signals():
-	_ink_player.connect("continued", self, "_continued")
-	_ink_player.connect("prompt_choices", self, "_prompt_choices")
-	_ink_player.connect("ended", self, "_ended")
+	_ink_player.continued.connect(_continued)
+	_ink_player.prompt_choices.connect(_prompt_choices)
+	_ink_player.ended.connect(_ended)
 
-	_ink_player.connect("exception_raised", self, "_exception_raised")
-	_ink_player.connect("error_encountered", self, "_error_encountered")
+	_ink_player.exception_raised.connect(_exception_raised)
+	_ink_player.error_encountered.connect(_error_encountered)

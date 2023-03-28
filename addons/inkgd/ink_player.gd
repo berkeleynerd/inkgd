@@ -15,11 +15,7 @@ class_name InkPlayer
 
 var ErrorType = preload("res://addons/inkgd/runtime/enums/error.gd").ErrorType
 
-var InkRuntime = load("res://addons/inkgd/runtime.gd")
-var InkResource = load("res://addons/inkgd/editor/import_plugins/ink_resource.gd")
-var InkStory = load("res://addons/inkgd/runtime/story.gd")
-var InkFunctionResult = load("res://addons/inkgd/runtime/extra/function_result.gd")
-
+const InkRuntime = preload("res://addons/inkgd/runtime.gd")
 
 # ############################################################################ #
 # Signals
@@ -71,13 +67,13 @@ signal ended()
 # ############################################################################ #
 
 ## The compiled Ink file (.json) to play.
-export var ink_file: Resource
+@export var ink_file: Resource
 
 ## When `true` the _story will be created in a separate threads, to
 ## prevent the UI from freezing if the _story is too big. Note that
 ## on platforms where threads aren't available, the value of this
 ## property is ignored.
-export var loads_in_background: bool = true
+@export var loads_in_background: bool = true
 
 
 # ############################################################################ #
@@ -92,7 +88,7 @@ export var loads_in_background: bool = true
 ## `true` to allow external function fallbacks, `false` otherwise. If this
 ## property is `false` and the appropriate function hasn't been binded, the
 ## _story will output an error.
-var allow_external_function_fallbacks: bool setget set_aeff, get_aeff
+var allow_external_function_fallbacks: bool: get = get_aeff, set = set_aeff
 func set_aeff(value: bool):
 	if _story == null:
 		_push_null_story_error()
@@ -108,7 +104,7 @@ func get_aeff() -> bool:
 
 # skips saving global values that remain equal to the initial values that were
 # declared in Ink.
-var do_not_save_default_values: bool setget set_dnsdv, get_dnsdv
+var do_not_save_default_values: bool: get = get_dnsdv, set = set_dnsdv
 func set_dnsdv(value: bool):
 	var ink_runtime = _ink_runtime.get_ref()
 	if ink_runtime == null:
@@ -126,7 +122,7 @@ func get_dnsdv() -> bool:
 
 ## Uses `assert` instead of `push_error` to report critical errors, thus
 ## making them more explicit during development.
-var stop_execution_on_exception: bool setget set_seoex, get_seoex
+var stop_execution_on_exception: bool: get = get_seoex, set = set_seoex
 func set_seoex(value: bool):
 	var ink_runtime = _ink_runtime.get_ref()
 	if ink_runtime == null:
@@ -144,7 +140,7 @@ func get_seoex() -> bool:
 
 ## Uses `assert` instead of `push_error` to report _story errors, thus
 ## making them more explicit during development.
-var stop_execution_on_error: bool setget set_seoer, get_seoer
+var stop_execution_on_error: bool: get = get_seoer, set = set_seoer
 func set_seoer(value: bool):
 	var ink_runtime = _ink_runtime.get_ref()
 	if ink_runtime == null:
@@ -168,7 +164,7 @@ func get_seoer() -> bool:
 
 ## `true` if the _story can continue (i. e. is not expecting a choice to be
 ## choosen and hasn't reached the end).
-var can_continue: bool setget , get_can_continue
+var can_continue: bool: get = get_can_continue
 func get_can_continue() -> bool:
 	if _story == null:
 		_push_null_story_error()
@@ -180,7 +176,7 @@ func get_can_continue() -> bool:
 ## If `continue_async` was called (with milliseconds limit > 0) then this
 ## property will return false if the ink evaluation isn't yet finished, and
 ## you need to call it again in order for the continue to fully complete.
-var async_continue_complete: bool setget , get_async_continue_complete
+var async_continue_complete: bool: get = get_async_continue_complete
 func get_async_continue_complete() -> bool:
 	if _story == null:
 		_push_null_story_error()
@@ -190,7 +186,7 @@ func get_async_continue_complete() -> bool:
 
 
 ## The content of the current line.
-var current_text: String setget , get_current_text
+var current_text: String: get = get_current_text
 func get_current_text() -> String:
 	if _story == null:
 		_push_null_story_error()
@@ -201,7 +197,7 @@ func get_current_text() -> String:
 
 
 ## The current choices. Empty is there are no choices for the current line.
-var current_choices: Array setget , get_current_choices
+var current_choices: Array: get = get_current_choices
 func get_current_choices() -> Array:
 	if _story == null:
 		_push_null_story_error()
@@ -215,7 +211,7 @@ func get_current_choices() -> Array:
 
 
 ## The current tags. Empty is there are no tags for the current line.
-var current_tags: Array setget , get_current_tags
+var current_tags: Array: get = get_current_tags
 func get_current_tags() -> Array:
 	if _story == null:
 		_push_null_story_error()
@@ -228,7 +224,7 @@ func get_current_tags() -> Array:
 
 
 ## The global tags for the _story. Empty if none have been declared.
-var global_tags: Array setget , get_global_tags
+var global_tags: Array: get = get_global_tags
 func get_global_tags() -> Array:
 	if _story == null:
 		_push_null_story_error()
@@ -241,13 +237,13 @@ func get_global_tags() -> Array:
 
 
 ## `true` if the _story currently has choices, `false` otherwise.
-var has_choices: bool setget , get_has_choices
+var has_choices: bool: get = get_has_choices
 func get_has_choices() -> bool:
-	return !self.current_choices.empty()
+	return !current_choices.is_empty()
 
 
 ## The name of the current flow.
-var current_flow_name: String setget , get_current_flow_name
+var current_flow_name: String: get = get_current_flow_name
 func get_current_flow_name() -> String:
 	if _story == null:
 		_push_null_story_error()
@@ -257,7 +253,7 @@ func get_current_flow_name() -> String:
 
 
 ## The current story path.
-var current_path: String setget , get_current_path
+var current_path: String: get = get_current_path
 func get_current_path() -> String:
 	if _story == null:
 		_push_null_story_error()
@@ -321,7 +317,7 @@ func create_story() -> int:
 
 	if loads_in_background && _current_platform_supports_threads():
 		_thread = Thread.new()
-		var error = _thread.start(self, "_async_create_story", ink_file.json)
+		var error = _thread.start(_async_create_story.bind(ink_file.json))
 		if error != OK:
 			printerr("[inkgd] [ERROR] Could not start the thread: error code %d", error)
 			call_deferred("emit_signal", "loaded", false)
@@ -358,13 +354,13 @@ func continue_story() -> String:
 		return ""
 
 	var text: String = ""
-	if self.can_continue:
-		_story.continue()
+	if can_continue:
+		_story.continue_story()
 
-		text = self.current_text
+		text = current_text
 
-	elif self.has_choices:
-		emit_signal("prompt_choices", self.current_choices)
+	elif has_choices:
+		emit_signal("prompt_choices", current_choices)
 	else:
 		emit_signal("ended")
 
@@ -385,15 +381,15 @@ func continue_story_async(millisecs_limit_async: float) -> void:
 		_push_null_story_error()
 		return
 
-	if self.can_continue:
+	if can_continue:
 		_story.continue_async(millisecs_limit_async)
 
-		if !self.async_continue_complete:
+		if !async_continue_complete:
 			emit_signal("interrupted")
 			return
 
-	elif self.has_choices:
-		emit_signal("prompt_choices", self.current_choices)
+	elif has_choices:
+		emit_signal("prompt_choices", current_choices)
 	else:
 		emit_signal("ended")
 
@@ -407,13 +403,13 @@ func continue_story_maximally() -> String:
 		return ""
 
 	var text: String = ""
-	if self.can_continue:
+	if can_continue:
 		_story.continue_maximally()
 
-		text = self.current_text
+		text = current_text
 
-	elif self.has_choices:
-		emit_signal("prompt_choices", self.current_choices)
+	elif has_choices:
+		emit_signal("prompt_choices", current_choices)
 	else:
 		emit_signal("ended")
 
@@ -426,7 +422,7 @@ func choose_choice_index(index: int) -> void:
 		_push_null_story_error()
 		return
 
-	if index >= 0 && index < self.current_choices.size():
+	if index >= 0 && index < current_choices.size():
 		_story.choose_choice_index(index);
 
 
@@ -549,14 +545,13 @@ func save_state_to_path(path: String):
 	if !path.begins_with("res://") && !path.begins_with("user://"):
 		path = "user://%s" % path
 
-	var file = File.new()
-	file.open(path, File.WRITE)
+	var file = FileAccess.open(path, FileAccess.WRITE)
 	save_state_to_file(file)
 	file.close()
 
 
 ## Saves the current state to the file.
-func save_state_to_file(file: File):
+func save_state_to_file(file: FileAccess):
 	if _story == null:
 		_push_null_story_error()
 		return
@@ -575,14 +570,13 @@ func load_state_from_path(path: String):
 	if !path.begins_with("res://") && !path.begins_with("user://"):
 		path = "user://%s" % path
 
-	var file = File.new()
-	file.open(path, File.READ)
+	var file = FileAccess.open(path, FileAccess.READ)
 	load_state_from_file(file)
 	file.close()
 
 
 ## Loads the state from the given file.
-func load_state_from_file(file: File):
+func load_state_from_file(file: FileAccess):
 	if _story == null:
 		_push_null_story_error()
 		return
@@ -591,7 +585,7 @@ func load_state_from_file(file: File):
 		return
 
 	file.seek(0);
-	if file.get_len() > 0:
+	if file.get_length() > 0:
 		_story.state.load_json(file.get_as_text())
 
 
@@ -600,6 +594,7 @@ func load_state_from_file(file: File):
 # ############################################################################ #
 
 ## Returns the value of variable named 'name' or 'null' if it doesn't exist.
+@warning_ignore("shadowed_variable_base_class")
 func get_variable(name: String):
 	if _story == null:
 		_push_null_story_error()
@@ -609,6 +604,7 @@ func get_variable(name: String):
 
 
 ## Sets the value of variable named 'name'.
+@warning_ignore("shadowed_variable_base_class")
 func set_variable(name: String, value):
 	if _story == null:
 		_push_null_story_error()
@@ -746,7 +742,7 @@ func _on_error(message, type) -> void:
 
 
 func _on_did_continue() -> void:
-	emit_signal("continued", self.current_text, self.current_tags)
+	emit_signal("continued", current_text, current_tags)
 
 
 func _on_make_choice(choice) -> void:
@@ -792,12 +788,12 @@ func _create_and_finalize_story(json_story) -> void:
 
 
 func _finalise_story_creation() -> void:
-	_story.connect("on_error", self, "_on_error")
-	_story.connect("on_did_continue", self, "_on_did_continue")
-	_story.connect("on_make_choice", self, "_on_make_choice")
-	_story.connect("on_evaluate_function", self, "_on_evaluate_function")
-	_story.connect("on_complete_evaluate_function", self, "_on_complete_evaluate_function")
-	_story.connect("on_choose_path_string", self, "_on_choose_path_string")
+	_story.on_error.connect(_on_error)
+	_story.on_did_continue.connect(_on_did_continue)
+	_story.on_make_choice.connect(_on_make_choice)
+	_story.on_evaluate_function.connect(_on_evaluate_function)
+	_story.on_complete_evaluate_function.connect(_on_complete_evaluate_function)
+	_story.on_choose_path_string.connect(_on_choose_path_string)
 
 	var ink_runtime = _ink_runtime.get_ref()
 	if ink_runtime == null:
@@ -818,7 +814,7 @@ func _add_runtime() -> void:
 		_manages_runtime = true
 		runtime = InkRuntime.init(get_tree().root)
 
-	runtime.connect("exception_raised", self, "_exception_raised")
+	runtime.exception_raised.connect(_exception_raised)
 
 	_ink_runtime = weakref(runtime)
 
@@ -843,7 +839,7 @@ func _push_null_story_error() -> void:
 
 
 func _push_story_error(message: String, type: int) -> void:
-	if Engine.editor_hint:
+	if Engine.is_editor_hint():
 		match type:
 			ErrorType.ERROR:
 				printerr(message)
@@ -857,7 +853,7 @@ func _push_story_error(message: String, type: int) -> void:
 				push_warning(message)
 
 func _push_error(message: String):
-	if Engine.editor_hint:
+	if Engine.is_editor_hint():
 		printerr(message)
 
 		var i = 1

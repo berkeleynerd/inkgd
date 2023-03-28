@@ -4,7 +4,7 @@
 # See LICENSE in the project root for license information.
 # ############################################################################ #
 
-extends Reference
+extends RefCounted
 
 class_name InkEditorInterface
 
@@ -28,7 +28,7 @@ var editor_settings: EditorSettings
 var editor_filesystem: EditorFileSystem
 
 ## `true` if the editor is running on Windows, `false` otherwise.
-var is_running_on_windows: bool setget , get_is_running_on_windows
+var is_running_on_windows: bool: get = get_is_running_on_windows
 func get_is_running_on_windows() -> bool:
 	var os_name = OS.get_name()
 	return (os_name == "Windows" || os_name == "UWP")
@@ -39,13 +39,13 @@ func get_is_running_on_windows() -> bool:
 # ############################################################################ #
 
 func _init(editor_interface: EditorInterface):
-	self.editor_interface = editor_interface
-	self.editor_settings = editor_interface.get_editor_settings()
-	self.editor_filesystem = editor_interface.get_resource_filesystem()
+	editor_interface = editor_interface
+	editor_settings = editor_interface.get_editor_settings()
+	editor_filesystem = editor_interface.get_resource_filesystem()
 
 	scale = editor_interface.get_editor_scale()
 
-	self.editor_filesystem.connect("resources_reimported", self, "_resources_reimported")
+	editor_filesystem.resources_reimported.connect(_resources_reimported)
 
 # ############################################################################ #
 # Methods
@@ -53,28 +53,28 @@ func _init(editor_interface: EditorInterface):
 
 ## Tell Godot to scan for updated resources.
 func scan_file_system():
-	self.editor_filesystem.scan()
+	editor_filesystem.scan()
 
 ## Tell Godot to scan the given resource.
 func update_file(path: String):
-	self.editor_filesystem.update_file(path)
+	editor_filesystem.update_file(path)
 
 ## Returns a custom header color based on the editor's base color.
 ##
 ## If the base color is not found, return 'Color.transparent'.
 func get_custom_header_color() -> Color:
-	var color = self.editor_settings.get_setting("interface/theme/base_color")
+	var color = editor_settings.get_setting("interface/theme/base_color")
 	if color != null:
 		return Color.from_hsv(color.h * 0.99, color.s * 0.6, color.v * 1.1)
 	else:
-		return Color.transparent
+		return Color.TRANSPARENT
 
 # ############################################################################ #
 # Signal Receivers
 # ############################################################################ #
 
 func _resources_reimported(resources):
-	var ink_resources := PoolStringArray()
+	var ink_resources := PackedStringArray()
 
 	for resource in resources:
 		if resource.get_extension() == "ink":

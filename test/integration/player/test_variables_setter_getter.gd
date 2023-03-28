@@ -13,19 +13,11 @@ extends "res://test/integration/player/test_base.gd"
 # forth between GDScript and C#.
 
 # ############################################################################ #
-# Imports
-# ############################################################################ #
-
-var InkList := load("res://addons/inkgd/runtime/lists/ink_list.gd") as GDScript
-var InkPath := load("res://addons/inkgd/runtime/ink_path.gd") as GDScript
-
-
-# ############################################################################ #
 # Methods
 # ############################################################################ #
 
 func test_ink_list_simple_roundtrip() -> void:
-	yield(_load_story("ink_list_roundtrip"), "completed")
+	await _load_story("ink_list_roundtrip")
 
 	_test_simple_list_validity()
 
@@ -41,7 +33,7 @@ func test_ink_list_simple_roundtrip() -> void:
 
 
 func test_ink_path_simple_roundtrip() -> void:
-	yield(_load_story("ink_list_roundtrip"), "completed")
+	await _load_story("ink_list_roundtrip")
 
 	_test_ink_path_validity()
 

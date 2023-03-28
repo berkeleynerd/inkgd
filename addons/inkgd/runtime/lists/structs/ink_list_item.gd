@@ -1,5 +1,3 @@
-# warning-ignore-all:shadowed_variable
-# warning-ignore-all:unused_class_variable
 # ############################################################################ #
 # Copyright © 2015-2021 inkle Ltd.
 # Copyright © 2019-2022 Frédéric Maquin <fred@ephread.com>
@@ -18,24 +16,17 @@ extends InkObject
 class_name InkListItem
 
 # ############################################################################ #
-# Self-reference
-# ############################################################################ #
-
-static func InkListItem():
-	return load("res://addons/inkgd/runtime/lists/structs/ink_list_item.gd")
-
-# ############################################################################ #
 
 # Originally these were simple variables, but they are turned into properties to
 # make the object "immutable". That way it can be passed around without being
 # duplicated.
 
-var origin_name setget , get_origin_name
+var origin_name : get = get_origin_name
 func get_origin_name():
 	return _origin_name
 var _origin_name = null # String
 
-var item_name setget , get_item_name
+var item_name : get = get_item_name
 func get_item_name():
 	return _item_name
 var _item_name = null # String
@@ -44,46 +35,46 @@ var _item_name = null # String
 
 # (string, string) -> InkListItem
 func _init_with_origin_name(origin_name, item_name):
-	self._origin_name = origin_name
-	self._item_name = item_name
+	_origin_name = origin_name
+	_item_name = item_name
 
 # (string) -> InkListItem
 func _init_with_full_name(full_name):
 	var name_parts = full_name.split(".")
-	self._origin_name = name_parts[0]
-	self._item_name = name_parts[1]
+	_origin_name = name_parts[0]
+	_item_name = name_parts[1]
 
-static func null() -> InkListItem:
-	return InkListItem().new_with_origin_name(null, null)
+static func new_null() -> InkListItem:
+	return InkListItem.new_with_origin_name(null, null)
 
 # ############################################################################ #
 
-var is_null: bool setget , get_is_null
+var is_null: bool: get = get_is_null
 func get_is_null() -> bool:
-	return self.origin_name == null && self.item_name == null
+	return origin_name == null && item_name == null
 
 # String
-var full_name setget , get_full_name
+var full_name : get = get_full_name
 func get_full_name():
 	# In C#, concatenating null produce nothing, in GDScript, it appends "Null".
 	return (
-			(self.origin_name if self.origin_name else "?") + "." +
-			(self.item_name if self.item_name else "")
+			(origin_name if origin_name else "?") + "." +
+			(item_name if item_name else "")
 	)
 
 # ############################################################################ #
 
 # () -> String
 func _to_string() -> String:
-	return self.full_name
+	return full_name
 
 # (InkObject) -> bool
 func equals(obj: InkObject) -> bool:
-	if obj.is_class("InkListItem"):
+	if obj is InkListItem:
 		var other_item = obj
 		return (
-			other_item.item_name == self.item_name &&
-			self.other_item.origin_name == self.origin_name
+			other_item.item_name == item_name &&
+			other_item.origin_name == origin_name
 		)
 
 	return false
@@ -92,25 +83,15 @@ func equals(obj: InkObject) -> bool:
 
 # (string, string) -> InkListItem
 static func new_with_origin_name(origin_name, item_name) -> InkListItem:
-	var list_item = InkListItem().new()
+	var list_item = InkListItem.new()
 	list_item._init_with_origin_name(origin_name, item_name)
 	return list_item
 
 # (string) -> InkListItem
 static func new_with_full_name(full_name) -> InkListItem:
-	var list_item = InkListItem().new()
+	var list_item = InkListItem.new()
 	list_item._init_with_full_name(full_name)
 	return list_item
-
-# ############################################################################ #
-# GDScript extra methods
-# ############################################################################ #
-
-func is_class(type: String) -> bool:
-	return type == "InkListItem" || .is_class(type)
-
-func get_class() -> String:
-	return "InkListItem"
 
 # ############################################################################ #
 # These methods did not exist in the original C# code. Their purpose is to
@@ -122,8 +103,8 @@ func get_class() -> String:
 # instance. The result is intended to be used as a key inside a Map.
 func serialized() -> String:
 	# We are simply using a JSON representation as a value-typed key.
-	var json_print = JSON.print(
-			{ "originName": self.origin_name, "itemName": self.item_name }
+	var json_print = JSON.stringify(
+			{ "originName": origin_name, "itemName": item_name }
 	)
 	return json_print
 
@@ -131,11 +112,11 @@ func serialized() -> String:
 #
 # (String) -> InkListItem
 static func from_serialized_key(key: String) -> InkListItem:
-	var obj = JSON.parse(key).result
-	if !InkListItem()._is_like_ink_list_item(obj):
-		return InkListItem().null()
+	var obj = JSON.parse_string(key)
+	if !InkListItem._is_like_ink_list_item(obj):
+		return InkListItem.new_null()
 
-	return InkListItem().new_with_origin_name(obj["originName"], obj["itemName"])
+	return InkListItem.new_with_origin_name(obj["originName"], obj["itemName"])
 
 # Determines whether the given item is sufficiently `InkListItem`-like
 # to be used as a template when reconstructing the InkListItem.

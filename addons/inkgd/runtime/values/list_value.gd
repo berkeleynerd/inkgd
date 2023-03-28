@@ -1,5 +1,3 @@
-# warning-ignore-all:shadowed_variable
-# warning-ignore-all:unused_class_variable
 # ############################################################################ #
 # Copyright © 2015-2021 inkle Ltd.
 # Copyright © 2019-2022 Frédéric Maquin <fred@ephread.com>
@@ -28,28 +26,28 @@ func cast(new_type, metadata = null):
 	if new_type == ValueType.INT:
 		var max_item = value.max_item
 		if max_item.key.is_null:
-			return IntValue().new_with(0)
+			return InkIntValue.new_with(0)
 		else:
-			return IntValue().new_with(max_item.value)
+			return InkIntValue.new_with(max_item.value)
 
 	elif new_type == ValueType.FLOAT:
 		var max_item = value.max_item
 		if max_item.key.is_null:
-			return FloatValue().new_with(0.0)
+			return InkFloatValue.new_with(0.0)
 		else:
-			return FloatValue().new_with(float(max_item.value))
+			return InkFloatValue.new_with(float(max_item.value))
 
 	elif new_type == ValueType.STRING:
 		var max_item = value.max_item
 		if max_item.key.is_null:
-			return StringValue().new_with("")
+			return InkStringValue.new_with("")
 		else:
-			return StringValue().new_with(max_item.key._to_string())
+			return InkStringValue.new_with(max_item.key._to_string())
 
-	if new_type == self.value_type:
+	if new_type == value_type:
 		return self
 
-	Utils.throw_story_exception(bad_cast_exception_message(new_type), false, metadata)
+	InkUtils.throw_story_exception(bad_cast_exception_message(new_type), false, metadata)
 	return null
 
 func _init():
@@ -63,10 +61,10 @@ func _init_with_single_item(single_item, single_value):
 
 # (InkObject, InkObject) -> void
 static func retain_list_origins_for_assignment(old_value, new_value):
-	var Utils = load("res://addons/inkgd/runtime/extra/utils.gd")
+	var InkUtils = load("res://addons/inkgd/runtime/extra/utils.gd")
 
-	var old_list = Utils.as_or_null(old_value, "ListValue")
-	var new_list = Utils.as_or_null(new_value, "ListValue")
+	var old_list = old_value as InkListValue
+	var new_list = new_value as InkListValue
 
 	if old_list && new_list && new_list.value.size() == 0:
 		new_list.value.set_initial_origin_names(old_list.value.origin_names)
@@ -75,18 +73,12 @@ static func retain_list_origins_for_assignment(old_value, new_value):
 # GDScript extra methods
 # ############################################################################ #
 
-func is_class(type):
-	return type == "ListValue" || .is_class(type)
-
-func get_class():
-	return "ListValue"
-
 static func new_with(list):
-	var value = ListValue().new()
+	var value = InkListValue.new()
 	value._init_with_list(list)
 	return value
 
 static func new_with_single_item(single_item, single_value):
-	var value = ListValue().new()
+	var value = InkListValue.new()
 	value._init_with_single_item(single_item, single_value)
 	return value

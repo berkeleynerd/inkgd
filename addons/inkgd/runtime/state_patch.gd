@@ -1,5 +1,3 @@
-# warning-ignore-all:shadowed_variable
-# warning-ignore-all:unused_class_variable
 # ############################################################################ #
 # Copyright © 2015-2021 inkle Ltd.
 # Copyright © 2019-2022 Frédéric Maquin <fred@ephread.com>
@@ -14,31 +12,24 @@ extends InkBase
 class_name InkStatePatch
 
 # ############################################################################ #
-# Imports
-# ############################################################################ #
-
-var InkTryGetResult := preload("res://addons/inkgd/runtime/extra/try_get_result.gd") as GDScript
-var InkStringSet := preload("res://addons/inkgd/runtime/extra/string_set.gd") as GDScript
-
-# ############################################################################ #
 
 # Dictionary<String, InkObject>
-var globals: Dictionary setget , get_globals
+var globals: Dictionary: get = get_globals
 func get_globals() -> Dictionary:
 	return _globals
 
 # StringSet
-var changed_variables: InkStringSet setget , get_changed_variables
+var changed_variables: InkStringSet: get = get_changed_variables
 func get_changed_variables() -> InkStringSet:
 	return _changed_variables
 
 # Dictionary<InkContainer, int>
-var visit_counts: Dictionary setget , get_visit_counts
+var visit_counts: Dictionary: get = get_visit_counts
 func get_visit_counts() -> Dictionary:
 	return _visit_counts
 
 # Dictionary<InkContainer, int>
-var turn_indices setget , get_turn_indices
+var turn_indices : get = get_turn_indices
 func get_turn_indices() -> Dictionary:
 	return _turn_indices
 
@@ -93,13 +84,3 @@ var _globals: Dictionary
 var _changed_variables: InkStringSet
 var _visit_counts: Dictionary
 var _turn_indices: Dictionary
-
-# ############################################################################ #
-# GDScript extra methods
-# ############################################################################ #
-
-func is_class(type: String) -> bool:
-	return type == "StatePatch" || .is_class(type)
-
-func get_class() -> String:
-	return "StatePatch"

@@ -44,14 +44,14 @@ class Reader extends InkBase:
 		if c.length() > 1:
 			return false
 
-		return c.is_valid_integer() || c == "." || c == "-" || c == "+" || c == 'E' || c == 'e'
+		return c.is_valid_int() || c == "." || c == "-" || c == "+" || c == 'E' || c == 'e'
 
 	# (String) -> bool
 	func is_first_number_char(c: String) -> bool:
 		if c.length() > 1:
 			return false
 
-		return c.is_valid_integer() || c == "-" || c == "+"
+		return c.is_valid_int() || c == "-" || c == "+"
 
 	# () -> Variant
 	func read_object():
@@ -78,7 +78,7 @@ class Reader extends InkBase:
 		elif try_read("null"):
 			return null
 
-		Utils.throw_exception("Unhandled object type in JSON: %s" % _text.substr(_offset, 30))
+		InkUtils.throw_exception("Unhandled object type in JSON: %s" % _text.substr(_offset, 30))
 		return JsonError.new()
 
 	# () -> Dictionary<String, Variant>?
@@ -165,7 +165,7 @@ class Reader extends InkBase:
 			if c == "\\":
 				_offset += 1
 				if _offset >= _text.length():
-					Utils.throw_exception("Unexpected EOF while reading string")
+					InkUtils.throw_exception("Unexpected EOF while reading string")
 					return null
 				c = _text[_offset]
 				match c:
@@ -179,13 +179,15 @@ class Reader extends InkBase:
 						pass
 					"u":
 						if _offset + 4 >= _text.length():
-							Utils.throw_exception("Unexpected EOF while reading string")
+							InkUtils.throw_exception("Unexpected EOF while reading string")
 							return null
 						var digits = _text.substr(_offset + 1, 4)
 
-						var json_parse_result = JSON.parse("\"\\u" + digits + "\"")
+						var test_json_conv = JSON.new()
+						test_json_conv.parse("\"\\u" + digits + "\"")
+						var json_parse_result = test_json_conv.get_data()
 						if json_parse_result.error != OK:
-							Utils.throw_exception("Invalid Unicode escape character at offset %d" % (_offset - 1))
+							InkUtils.throw_exception("Invalid Unicode escape character at offset %d" % (_offset - 1))
 							return null
 
 						sb += json_parse_result.result
@@ -193,7 +195,7 @@ class Reader extends InkBase:
 
 						break
 					_:
-						Utils.throw_exception("Invalid Unicode escape character at offset %d " % (_offset - 1))
+						InkUtils.throw_exception("Invalid Unicode escape character at offset %d " % (_offset - 1))
 						return null
 			elif c == "\"":
 				break
@@ -229,10 +231,10 @@ class Reader extends InkBase:
 			if num_str.is_valid_float():
 				return float(num_str)
 		else:
-			if num_str.is_valid_integer():
+			if num_str.is_valid_int():
 				return int(num_str)
 
-		Utils.throw_exception("Failed to parse number value: " + num_str)
+		InkUtils.throw_exception("Failed to parse number value: " + num_str)
 		return JsonError.new()
 
 	# (String) -> bool
@@ -269,7 +271,7 @@ class Reader extends InkBase:
 
 			message += str(" at offset ", _offset)
 
-			Utils.throw_exception(message)
+			InkUtils.throw_exception(message)
 			return false
 
 		return true
@@ -287,43 +289,27 @@ class Reader extends InkBase:
 
 	var _root_object # Variant
 
-	# ######################################################################## #
-	# GDScript extra methods
-	# ######################################################################## #
-
-	func is_class(type: String) -> bool:
-		return type == "InkSimpleJSON.Reader" || .is_class(type)
-
-	func get_class() -> String:
-		return "InkSimpleJSON.Reader"
 
 class Writer extends InkBase:
-	# ######################################################################## #
-	# Imports
-	# ######################################################################## #
-
-	var InkStringWriter := load("res://addons/inkgd/runtime/extra/string_writer.gd") as GDScript
-	var InkStateElement := load("res://addons/inkgd/runtime/extra/state_element.gd") as GDScript
-
 	# (String) -> Writer
 	func _init():
-		self._writer = InkStringWriter.new()
+		_writer = InkStringWriter.new()
 
-	# (FuncRef) -> void
-	func write_object(inner: FuncRef) -> void:
+	# (Callable) -> void
+	func write_object(inner: Callable) -> void:
 		write_object_start()
-		inner.call_func(self)
+		inner.call(self)
 		write_object_end()
 
 	func write_object_start() -> void:
 		start_new_object(true)
-		self._state_stack.push_front(InkStateElement.new(InkStateElement.State.OBJECT))
-		self._writer.write("{")
+		_state_stack.push_front(InkStateElement.new(InkStateElement.State.OBJECT))
+		_writer.write("{")
 
 	func write_object_end() -> void:
-		assert_that(self.state == InkStateElement.State.OBJECT)
-		self._writer.write("}")
-		self._state_stack.pop_front()
+		assert_that(state == InkStateElement.State.OBJECT)
+		_writer.write("}")
+		_state_stack.pop_front()
 
 	# These two methods don't need to be implemented in GDScript.
 	#
@@ -338,9 +324,9 @@ class Writer extends InkBase:
 			write_property_start(name)
 			write(content)
 			write_property_end()
-		elif content is FuncRef:
+		elif content is Callable:
 			write_property_start(name)
-			content.call_func(self)
+			content.call(self)
 			write_property_end()
 		else:
 			push_error("Wrong type for 'content': %s" % str(content))
@@ -352,47 +338,47 @@ class Writer extends InkBase:
 
 	# () -> void
 	func write_property_end() -> void:
-		assert_that(self.state == InkStateElement.State.PROPERTY)
-		assert_that(self.child_count == 1)
-		self._state_stack.pop_front()
+		assert_that(state == InkStateElement.State.PROPERTY)
+		assert_that(child_count == 1)
+		_state_stack.pop_front()
 
 	# (String) -> void
 	func write_property_name_start() -> void:
-		assert_that(self.state == InkStateElement.State.OBJECT)
+		assert_that(state == InkStateElement.State.OBJECT)
 
-		if self.child_count > 0:
-			self._writer.write(',')
+		if child_count > 0:
+			_writer.write(',')
 
-		self._writer.write('"')
+		_writer.write('"')
 
 		increment_child_count()
 
-		self._state_stack.push_front(InkStateElement.new(InkStateElement.State.PROPERTY))
-		self._state_stack.push_front(InkStateElement.new(InkStateElement.State.PROPERTY_NAME))
+		_state_stack.push_front(InkStateElement.new(InkStateElement.State.PROPERTY))
+		_state_stack.push_front(InkStateElement.new(InkStateElement.State.PROPERTY_NAME))
 
 	# () -> void
 	func write_property_name_end() -> void:
-		assert_that(self.state == InkStateElement.State.PROPERTY_NAME)
+		assert_that(state == InkStateElement.State.PROPERTY_NAME)
 
-		self._writer.write('":')
+		_writer.write('":')
 
-		self._state_stack.pop_front()
+		_state_stack.pop_front()
 
 	# (String) -> void
 	func write_property_name_inner(string: String) -> void:
-		assert_that(self.state == InkStateElement.State.PROPERTY_NAME)
-		self._writer.write(string)
+		assert_that(state == InkStateElement.State.PROPERTY_NAME)
+		_writer.write(string)
 
 	# (Variant) -> void
 	func write_property_start(name) -> void:
-		assert_that(self.state == InkStateElement.State.OBJECT)
+		assert_that(state == InkStateElement.State.OBJECT)
 
-		if self.child_count > 0:
-			self._writer.write(',')
+		if child_count > 0:
+			_writer.write(',')
 
-		self._writer.write('"')
-		self._writer.write(str(name))
-		self._writer.write('":')
+		_writer.write('"')
+		_writer.write(str(name))
+		_writer.write('":')
 
 		increment_child_count()
 
@@ -406,7 +392,7 @@ class Writer extends InkBase:
 
 	# () -> void
 	func write_array_end() -> void:
-		assert_that(self.state == InkStateElement.State.ARRAY)
+		assert_that(state == InkStateElement.State.ARRAY)
 		_writer.write("]")
 		_state_stack.pop_front()
 
@@ -484,7 +470,7 @@ class Writer extends InkBase:
 
 	# (string, bool) -> void
 	func write_string_inner(string: String, escape: bool = true) -> void:
-		assert_that(self.state == InkStateElement.State.STRING)
+		assert_that(state == InkStateElement.State.STRING)
 		if escape:
 			write_escaped_string(string)
 		else:
@@ -511,36 +497,36 @@ class Writer extends InkBase:
 	func start_new_object(container: bool) -> void:
 		if container:
 			assert_that(
-					self.state == InkStateElement.State.NONE ||
-					self.state == InkStateElement.State.PROPERTY ||
-					self.state == InkStateElement.State.ARRAY
+					state == InkStateElement.State.NONE ||
+					state == InkStateElement.State.PROPERTY ||
+					state == InkStateElement.State.ARRAY
 			)
 		else:
 			assert_that(
-					self.state == InkStateElement.State.PROPERTY ||
-					self.state == InkStateElement.State.ARRAY
+					state == InkStateElement.State.PROPERTY ||
+					state == InkStateElement.State.ARRAY
 			)
 
-		if self.state == InkStateElement.State.ARRAY && self.child_count > 0:
+		if state == InkStateElement.State.ARRAY && child_count > 0:
 			_writer.write(",")
 
-		if self.state == InkStateElement.State.PROPERTY:
-			assert_that(self.child_count == 0)
+		if state == InkStateElement.State.PROPERTY:
+			assert_that(child_count == 0)
 
 		if (
-			self.state == InkStateElement.State.ARRAY ||
-			self.state == InkStateElement.State.PROPERTY
+			state == InkStateElement.State.ARRAY ||
+			state == InkStateElement.State.PROPERTY
 		):
 			increment_child_count()
 
-	var state: int setget , get_state # StateElement.State
+	var state: int: get = get_state # StateElement.State
 	func get_state() -> int:
 		if _state_stack.size() > 0:
 			return _state_stack.front().type
 		else:
 			return InkStateElement.State.NONE
 
-	var child_count: int setget , get_child_count # int
+	var child_count: int: get = get_child_count # int
 	func get_child_count() -> int:
 		if _state_stack.size() > 0:
 			return _state_stack.front().child_count
@@ -569,16 +555,6 @@ class Writer extends InkBase:
 
 	var _state_stack: Array = [] # Array<StateElement>
 	var _writer: InkStringWriter
-
-	# ######################################################################## #
-	# GDScript extra methods
-	# ######################################################################## #
-
-	func is_class(type: String) -> bool:
-		return type == "InkSimpleJSON.Writer" || .is_class(type)
-
-	func get_class() -> String:
-		return "InkSimpleJSON.Writer"
 
 
 class JsonError:

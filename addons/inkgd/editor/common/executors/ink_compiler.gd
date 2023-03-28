@@ -9,12 +9,6 @@ extends InkExternalCommandExecutor
 class_name InkCompiler
 
 # ############################################################################ #
-# Imports
-# ############################################################################ #
-
-var InkExecutionResult = load("res://addons/inkgd/editor/common/executors/structures/ink_execution_result.gd")
-
-# ############################################################################ #
 # Private Properties
 # ############################################################################ #
 
@@ -51,11 +45,11 @@ func _init(configuration: InkCompilationConfiguration):
 ## always returns `true`.
 func compile_story() -> bool:
 	if _configuration.use_threads:
-		var error = _thread.start(self, "_compile_story", _configuration, Thread.PRIORITY_HIGH)
+		var error = _thread.start(_compile_story.bind(_configuration), Thread.PRIORITY_HIGH)
 
 		if error != OK:
 			var result = InkExecutionResult.new(
-				self.identifier,
+				identifier,
 				_configuration.use_threads,
 				_configuration.user_triggered,
 				false,
@@ -82,20 +76,20 @@ func _compile_story(config: InkCompilationConfiguration) -> bool:
 	var return_code = 0
 	var output = []
 
-	var start_time = OS.get_ticks_msec()
+	var start_time = Time.get_ticks_msec()
 
 	if config.use_mono:
 		var args = [config.inklecate_path, '-o', config.target_file_path, config.source_file_path]
-		return_code = OS.execute(config.mono_path, args, true, output, true)
+		return_code = OS.execute(config.mono_path, args, output, true, true)
 	else:
 		var args = ['-o', config.target_file_path, config.source_file_path]
-		return_code = OS.execute(config.inklecate_path, args, true, output, true)
+		return_code = OS.execute(config.inklecate_path, args, output, true, true)
 
-	var end_time = OS.get_ticks_msec()
+	var end_time = Time.get_ticks_msec()
 
 	print("[inkgd] [INFO] Command executed in %dms." % (end_time - start_time))
 
-	var string_output = PoolStringArray(output)
+	var string_output = PackedStringArray(output)
 	if _configuration.use_threads:
 		call_deferred("_handle_compilation_result", config, return_code, string_output)
 		return true
@@ -124,10 +118,10 @@ func _handle_compilation_result(
 func _process_compilation_result(
 	config: InkCompilationConfiguration,
 	return_code: int,
-	output: PoolStringArray
+	output: PackedStringArray
 ) -> InkExecutionResult:
 	var success: bool = (return_code == 0)
-	var output_text: String = output.join("\n").replace(BOM, "").strip_edges()
+	var output_text: String = "\n".join(output).replace(BOM, "").strip_edges()
 
 	if success:
 		print("[inkgd] [INFO] %s was successfully compiled." % config.source_file_path)
@@ -138,7 +132,7 @@ func _process_compilation_result(
 		printerr(output_text)
 
 	return InkExecutionResult.new(
-			self.identifier,
+			identifier,
 			config.use_threads,
 			config.user_triggered,
 			success,

@@ -8,14 +8,6 @@
 
 extends "res://addons/gut/test.gd"
 
-# ############################################################################ #
-# Imports
-# ############################################################################ #
-
-var InkPath = preload("res://addons/inkgd/runtime/ink_path.gd")
-
-# ############################################################################ #
-
 func test_paths():
 	var path1 = InkPath.new_with_components_string("hello.1.world")
 	var path2 = InkPath.new_with_components_string("hello.1.world")

@@ -1,3 +1,4 @@
+@tool
 # ############################################################################ #
 # Copyright © 2018-2022 Paul Joannon
 # Copyright © 2019-2022 Frédéric Maquin <fred@ephread.com>
@@ -5,18 +6,11 @@
 # See LICENSE in the project root for license information.
 # ############################################################################ #
 
-tool
 extends Control
 
 # Hiding this type to prevent registration of "private" nodes.
 # See https://github.com/godotengine/godot-proposals/issues/1047
 # class_name InkPreviewPanel
-
-# ############################################################################ #
-# Imports
-# ############################################################################ #
-
-var InkPlayerFactory := preload("res://addons/inkgd/ink_player_factory.gd") as GDScript
 
 # ############################################################################ #
 # Enums
@@ -61,25 +55,25 @@ var _ink_player = InkPlayerFactory.create()
 # On Ready | Private Properties
 # ############################################################################ #
 
-onready var _play_icon = get_icon("Play", "EditorIcons")
+@onready var _play_icon = get_theme_icon("Play", "EditorIcons")
 
 # ############################################################################ #
 # On Ready | Private Nodes
 # ############################################################################
 
-onready var _command_strip = find_node("CommandStripHBoxContainer")
+@onready var _command_strip = find_child("CommandStripHBoxContainer")
 
-onready var _pick_story_button = _command_strip.get_node("PickStoryOptionButton")
-onready var _load_story_button = _command_strip.get_node("LoadStoryButton")
-onready var _start_button = _command_strip.get_node("StartButton")
-onready var _stop_button = _command_strip.get_node("StopButton")
-onready var _clear_button = _command_strip.get_node("ClearButton")
+@onready var _pick_story_button = _command_strip.get_node("PickStoryOptionButton")
+@onready var _load_story_button = _command_strip.get_node("LoadStoryButton")
+@onready var _start_button = _command_strip.get_node("StartButton")
+@onready var _stop_button = _command_strip.get_node("StopButton")
+@onready var _clear_button = _command_strip.get_node("ClearButton")
 
-onready var _scroll_container = find_node("ScrollContainer")
-onready var _story_container = _scroll_container.get_node("MarginContainer/StoryVBoxContainer")
+@onready var _scroll_container = find_child("ScrollContainer")
+@onready var _story_container = _scroll_container.get_node("MarginContainer/StoryVBoxContainer")
 
-onready var _choice_area_container = find_node("ChoicesAreaVBoxContainer")
-onready var _choices_container = _choice_area_container.get_node("ChoicesVBoxContainer")
+@onready var _choice_area_container = find_child("ChoicesAreaVBoxContainer")
+@onready var _choices_container = _choice_area_container.get_node("ChoicesVBoxContainer")
 
 # ############################################################################ #
 # Overrides
@@ -100,9 +94,9 @@ func _ready():
 	_apply_configuration()
 	_update_story_picker()
 
-	var load_icon = get_icon("Load", "EditorIcons")
-	var stop_icon = get_icon("Stop", "EditorIcons")
-	var clear_icon = get_icon("Clear", "EditorIcons")
+	var load_icon = get_theme_icon("Load", "EditorIcons")
+	var stop_icon = get_theme_icon("Stop", "EditorIcons")
+	var clear_icon = get_theme_icon("Clear", "EditorIcons")
 
 	_start_button.icon = _play_icon
 	_load_story_button.icon = load_icon
@@ -111,10 +105,10 @@ func _ready():
 
 	_stop_button.visible = false
 
-	_choice_area_container.rect_min_size = Vector2(200, 0) * editor_interface.scale
+	_choice_area_container.custom_minimum_size = Vector2(200, 0) * editor_interface.scale
 	_choice_area_container.visible = false
 
-	_file_dialog.connect("file_selected", self, "_on_file_selected")
+	_file_dialog.file_selected.connect(_on_file_selected)
 	add_child(_file_dialog)
 
 # ############################################################################ #
@@ -170,8 +164,8 @@ func _pick_story_button_selected(index):
 
 
 func _load_story_button_pressed():
-	_file_dialog.set_mode(FileDialog.MODE_OPEN_FILE)
-	_file_dialog.set_access(FileDialog.ACCESS_RESOURCES)
+	_file_dialog.set_file_mode(EditorFileDialog.FILE_MODE_OPEN_FILE)
+	_file_dialog.set_access(EditorFileDialog.ACCESS_RESOURCES)
 	_file_dialog.add_filter("*.json;Compiled Ink story")
 	_file_dialog.popup_centered(Vector2(1280, 800) * editor_interface.scale)
 
@@ -187,8 +181,8 @@ func _on_file_selected(path: String):
 	if _custom_stories.has(path):
 		return
 
-	for story_configuration in self.configuration.stories:
-		var target_file_path = self.configuration.get_target_file_path(story_configuration)
+	for story_configuration in configuration.stories:
+		var target_file_path = configuration.get_target_file_path(story_configuration)
 		if target_file_path == path:
 			return
 
@@ -198,7 +192,7 @@ func _on_file_selected(path: String):
 
 
 func _scrollbar_changed():
-	var max_value = _scroll_container.get_v_scrollbar().max_value
+	var max_value = _scroll_container.get_v_scroll_bar().max_value
 
 	if _scrollbar_max_value == max_value && _scrollbar_max_value != -1:
 		return
@@ -226,9 +220,9 @@ func _apply_configuration():
 	_pick_story_button.selected = _current_story_index
 
 	var i = 0
-	for story_configuration in self.configuration.stories:
-		var target_file_path = self.configuration.get_target_file_path(story_configuration)
-		if target_file_path != null && !target_file_path.empty():
+	for story_configuration in configuration.stories:
+		var target_file_path = configuration.get_target_file_path(story_configuration)
+		if target_file_path != null && !target_file_path.is_empty():
 			_available_stories.append({
 				NAME: "Story %d - %s" % [i + 1, target_file_path.get_file()],
 				FILE_PATH: target_file_path,
@@ -238,7 +232,7 @@ func _apply_configuration():
 
 	var j = 0
 	for custom_story_path in _custom_stories:
-		if custom_story_path != null && !custom_story_path.empty():
+		if custom_story_path != null && !custom_story_path.is_empty():
 			_available_stories.append({
 				NAME: custom_story_path.get_file(),
 				FILE_PATH: ProjectSettings.localize_path(custom_story_path),
@@ -279,18 +273,18 @@ func _continue_story():
 			text.erase(text.length() - 1, 1)
 
 		var text_label = Label.new()
-		text_label.autowrap = true
+		text_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		text_label.text = text
 
 		_story_container.add_child(text_label)
 
 		var tags = _ink_player.current_tags
-		if !tags.empty():
+		if !tags.is_empty():
 			var tag_label = Label.new()
-			tag_label.autowrap = true
-			tag_label.align = Label.ALIGN_CENTER
-			tag_label.text = "# " + PoolStringArray(tags).join(", ")
-			tag_label.add_color_override("font_color", Color(1, 1, 1, 0.4))
+			tag_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			tag_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			tag_label.text = "# " + ", ".join(PackedStringArray(tags))
+			tag_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.4))
 
 			_story_container.add_child(tag_label)
 
@@ -302,7 +296,7 @@ func _continue_story():
 		for choice in _ink_player.current_choices:
 			var button = Button.new()
 			button.text = choice
-			button.connect("pressed", self, "_choice_button_pressed", [i])
+			button.pressed.connect(_choice_button_pressed.bind(i))
 
 			_choices_container.add_child(button)
 			i += 1
@@ -311,7 +305,7 @@ func _continue_story():
 	else:
 		var label = Label.new()
 		label.text = "End of the story."
-		label.align = Label.ALIGN_RIGHT
+		label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
 		_story_container.add_child(label)
 
@@ -345,24 +339,18 @@ func _disable_command_strip(disabled: bool):
 
 func _connect_signals():
 	if configuration != null:
-		var is_connected = configuration.is_connected(
-				"story_configuration_changed",
-				self,
-				"_configuration_changed"
+		var is_connected = configuration.story_configuration_changed.is_connected(
+			_configuration_changed
 		)
 
 		if !is_connected:
-			configuration.connect(
-					"story_configuration_changed",
-					self,
-					"_configuration_changed"
-			)
+			configuration.story_configuration_changed.connect(_configuration_changed)
 
-	_ink_player.connect("loaded", self, "_story_loaded")
-	_pick_story_button.connect("item_selected", self, "_pick_story_button_selected")
-	_load_story_button.connect("pressed", self, "_load_story_button_pressed")
-	_start_button.connect("pressed", self, "_start_button_pressed")
-	_stop_button.connect("pressed", self, "_stop_button_pressed")
-	_clear_button.connect("pressed", self, "_clear_content")
+	_ink_player.loaded.connect(_story_loaded)
+	_pick_story_button.item_selected.connect(_pick_story_button_selected)
+	_load_story_button.pressed.connect(_load_story_button_pressed)
+	_start_button.pressed.connect(_start_button_pressed)
+	_stop_button.pressed.connect(_stop_button_pressed)
+	_clear_button.pressed.connect(_clear_content)
 
-	_scroll_container.get_v_scrollbar().connect("changed", self, "_scrollbar_changed")
+	_scroll_container.get_v_scroll_bar().changed.connect(_scrollbar_changed)

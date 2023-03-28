@@ -1,6 +1,3 @@
-# warning-ignore-all:shadowed_variable
-# warning-ignore-all:unused_class_variable
-# warning-ignore-all:return_value_discarded
 # ############################################################################ #
 # Copyright © 2015-2021 inkle Ltd.
 # Copyright © 2019-2022 Frédéric Maquin <fred@ephread.com>
@@ -15,17 +12,6 @@ extends InkBase
 class_name InkVariablesState
 
 # ############################################################################ #
-# Imports
-# ############################################################################ #
-
-var InkTryGetResult := preload("res://addons/inkgd/runtime/extra/try_get_result.gd") as GDScript
-var InkStringSet := preload("res://addons/inkgd/runtime/extra/string_set.gd") as GDScript
-
-var InkValue := load("res://addons/inkgd/runtime/values/value.gd") as GDScript
-var InkListValue := load("res://addons/inkgd/runtime/values/list_value.gd") as GDScript
-var InkVariablePointerValue := load("res://addons/inkgd/runtime/values/variable_pointer_value.gd") as GDScript
-
-# ############################################################################ #
 
 # (String, InkObject)
 signal variable_changed(variable_name, new_value)
@@ -34,9 +20,9 @@ signal variable_changed(variable_name, new_value)
 
 var patch: InkStatePatch # StatePatch
 
-var batch_observing_variable_changes: bool setget \
-		set_batch_observing_variable_changes, \
-		get_batch_observing_variable_changes
+var batch_observing_variable_changes: bool:
+		set = set_batch_observing_variable_changes,
+		get = get_batch_observing_variable_changes
 func get_batch_observing_variable_changes() -> bool:
 	return _batch_observing_variable_changes
 
@@ -54,16 +40,15 @@ func set_batch_observing_variable_changes(value: bool) -> void:
 
 var _batch_observing_variable_changes: bool = false
 
-var callstack: InkCallStack setget set_callstack, get_callstack
+var callstack: InkCallStack: get = get_callstack, set = set_callstack
 func get_callstack() -> InkCallStack:
 		return _callstack
 
 func set_callstack(value: InkCallStack):
 		_callstack = value
 
-# (String) -> Variant
-func get(variable_name: String):
-	if self.patch != null:
+func _get(variable_name: StringName) -> Variant:
+	if patch != null:
 		var global: InkTryGetResult = patch.try_get_global(variable_name)
 		if global.exists:
 			return global.result.value_object
@@ -75,24 +60,24 @@ func get(variable_name: String):
 	else:
 		return null
 
-# (String, Variant) -> void
-func set(variable_name: String, value) -> void:
+func _set(variable_name: StringName, value: Variant) -> bool:
 	if !_default_global_variables.has(variable_name):
-		Utils.throw_story_exception(
+		InkUtils.throw_story_exception(
 				"Cannot assign to a variable (%s) that hasn't been declared in the story" \
 				% variable_name
 		)
-		return
+		return true
 
 	var val: InkValue = InkValue.create(value)
 	if val == null:
 		if value == null:
-			Utils.throw_exception("Cannot pass null to VariableState")
+			InkUtils.throw_exception("Cannot pass null to VariableState")
 		else:
-			Utils.throw_exception("Invalid value passed to VariableState: %s" % str(value))
-		return
+			InkUtils.throw_exception("Invalid value passed to VariableState: %s" % str(value))
+		return true
 
 	set_global(variable_name, val)
+	return true
 
 func enumerate() -> Array:
 	return _global_variables.keys()
@@ -106,11 +91,11 @@ func _init(callstack: InkCallStack, list_defs_origin: InkListDefinitionsOrigin):
 
 # () -> void
 func apply_patch() -> void:
-	for named_var_key in self.patch.globals:
-		_global_variables[named_var_key] = self.patch.globals[named_var_key]
+	for named_var_key in patch.globals:
+		_global_variables[named_var_key] = patch.globals[named_var_key]
 
 	if _changed_variables_for_batch_obs != null:
-		for name in self.patch.changed_variables.enumerate():
+		for name in patch.changed_variables.enumerate():
 			_changed_variables_for_batch_obs.append(name)
 
 	patch = null
@@ -122,7 +107,7 @@ func set_json_token(jtoken: Dictionary) -> void:
 	for var_val_key in _default_global_variables:
 		if jtoken.has(var_val_key):
 			var loaded_token = jtoken[var_val_key]
-			_global_variables[var_val_key] = self._json.jtoken_to_runtime_object(loaded_token)
+			_global_variables[var_val_key] = _json.jtoken_to_runtime_object(loaded_token)
 		else:
 			_global_variables[var_val_key] = _default_global_variables[var_val_key]
 
@@ -132,34 +117,34 @@ func write_json(writer: InkSimpleJSON.Writer) -> void:
 		var name: String = key
 		var val: InkObject = _global_variables[key]
 
-		if self._ink_runtime.dont_save_default_values:
-			if self._default_global_variables.has(name):
-				if runtime_objects_equal(val, self._default_global_variables[name]):
+		if _ink_runtime.dont_save_default_values:
+			if _default_global_variables.has(name):
+				if runtime_objects_equal(val, _default_global_variables[name]):
 					continue
 
 		writer.write_property_start(name)
-		self._json.write_runtime_object(writer, val)
+		_json.write_runtime_object(writer, val)
 		writer.write_property_end()
 	writer.write_object_end()
 
 func runtime_objects_equal(obj1: InkObject, obj2: InkObject) -> bool:
-	if !Utils.are_of_same_type(obj1, obj2):
+	if !InkUtils.are_of_same_type(obj1, obj2):
 		return false
 
-	var bool_val: InkBoolValue = Utils.as_or_null(obj1, "BoolValue")
+	var bool_val: InkBoolValue = obj1 as InkBoolValue
 	if bool_val != null:
-		return bool_val.value == Utils.cast(obj2, "BoolValue").value
+		return bool_val.value == obj2.value
 
-	var int_val: InkIntValue = Utils.as_or_null(obj1, "IntValue")
+	var int_val: InkIntValue = obj1 as InkIntValue
 	if int_val != null:
-		return int_val.value == Utils.cast(obj2, "IntValue").value
+		return int_val.value == obj2.value
 
-	var float_val: InkFloatValue = Utils.as_or_null(obj1, "FloatValue")
+	var float_val: InkFloatValue = obj1 as InkFloatValue
 	if float_val != null:
-		return float_val.value == Utils.cast(obj2, "FloatValue").value
+		return float_val.value == obj2.value
 
-	var val1: InkValue = Utils.as_or_null(obj1, "Value")
-	var val2: InkValue = Utils.as_or_null(obj2, "Value")
+	var val1: InkValue = obj1 as InkValue
+	var val2: InkValue = obj2 as InkValue
 
 	if val1 != null:
 		if val1.value_object is Object && val2.value_object is Object:
@@ -167,7 +152,7 @@ func runtime_objects_equal(obj1: InkObject, obj2: InkObject) -> bool:
 		else:
 			return val1.value_object == val2.value_object
 
-	Utils.throw_exception(
+	InkUtils.throw_exception(
 			"FastRoughDefinitelyEquals: Unsupported runtime object type: %s" \
 			% obj1.get_class()
 	)
@@ -177,7 +162,7 @@ func runtime_objects_equal(obj1: InkObject, obj2: InkObject) -> bool:
 func get_variable_with_name(name: String, context_index = -1) -> InkObject:
 	var var_value: InkObject = get_raw_variable_with_name(name, context_index)
 
-	var var_pointer: InkVariablePointerValue = Utils.as_or_null(var_value, "VariablePointerValue")
+	var var_pointer: InkVariablePointerValue = var_value as InkVariablePointerValue
 	if var_pointer:
 		var_value = value_at_variable_pointer(var_pointer)
 
@@ -200,16 +185,16 @@ func get_raw_variable_with_name(name: String, context_index: int) -> InkObject:
 	var var_value: InkObject = null
 
 	if context_index == 0 || context_index == -1:
-		if self.patch != null:
-			var try_result: InkTryGetResult = self.patch.try_get_global(name)
+		if patch != null:
+			var try_result: InkTryGetResult = patch.try_get_global(name)
 			if try_result.exists: return try_result.result
 
 		if _global_variables.has(name):
 			return _global_variables[name]
 
-		if self._default_global_variables != null:
-			if self._default_global_variables.has(name):
-				return self._default_global_variables[name]
+		if _default_global_variables != null:
+			if _default_global_variables.has(name):
+				return _default_global_variables[name]
 
 		var list_item_value: InkListValue = _list_defs_origin.find_single_item_list_with_name(name)
 
@@ -222,7 +207,7 @@ func get_raw_variable_with_name(name: String, context_index: int) -> InkObject:
 
 # (InkVariablePointerValue) -> InkObject
 func value_at_variable_pointer(pointer: InkVariablePointerValue) -> InkObject:
-	return get_variable_with_name(pointer.variable_name, pointer.context_index)
+	return get_variable_with_name(str(pointer.variable_name), pointer.context_index)
 
 # (InkVariableAssignment, InkObject) -> void
 func assign(var_ass: InkVariableAssignment, value: InkObject) -> void:
@@ -236,7 +221,7 @@ func assign(var_ass: InkVariableAssignment, value: InkObject) -> void:
 		set_global = global_variable_exists_with_name(name)
 
 	if var_ass.is_new_declaration:
-		var var_pointer: InkVariablePointerValue = Utils.as_or_null(value, "VariablePointerValue")
+		var var_pointer: InkVariablePointerValue = value as InkVariablePointerValue
 		if var_pointer:
 			var fully_resolved_variable_pointer: InkObject = resolve_variable_pointer(var_pointer)
 			value = fully_resolved_variable_pointer
@@ -245,12 +230,9 @@ func assign(var_ass: InkVariableAssignment, value: InkObject) -> void:
 		var first_time: bool = true
 		while existing_pointer || first_time:
 			first_time = false
-			existing_pointer = Utils.as_or_null(
-				get_raw_variable_with_name(name, context_index),
-				"VariablePointerValue"
-			)
+			existing_pointer = get_raw_variable_with_name(name, context_index) as InkVariablePointerValue
 			if existing_pointer:
-				name = existing_pointer.variable_name
+				name = str(existing_pointer.variable_name)
 				context_index = existing_pointer.context_index
 				set_global = (context_index == 0)
 
@@ -265,15 +247,15 @@ func snapshot_default_globals():
 
 # (InkObject, InkObject) -> void
 func retain_list_origins_for_assignment(old_value, new_value) -> void:
-	var old_list: InkListValue = Utils.as_or_null(old_value, "ListValue")
-	var new_list: InkListValue = Utils.as_or_null(new_value, "ListValue")
+	var old_list: InkListValue = old_value as InkListValue
+	var new_list: InkListValue = new_value as InkListValue
 
 	if old_list && new_list && new_list.value.size() == 0:
 		new_list.value.set_initial_origin_names(old_list.value.origin_names)
 
 # (String, InkObject) -> void
 func set_global(variable_name: String, value: InkObject) -> void:
-	var old_value = null # InkObject
+	var old_value: InkObject = null
 
 	# Slightly different structure from upstream, since we can't use
 	# try_get_global in the conditional.
@@ -283,21 +265,21 @@ func set_global(variable_name: String, value: InkObject) -> void:
 			old_value = patch_value.result
 
 	if old_value == null:
-		if self._global_variables.has(variable_name):
-			old_value = self._global_variables[variable_name]
+		if _global_variables.has(variable_name):
+			old_value = _global_variables[variable_name]
 
 	InkListValue.retain_list_origins_for_assignment(old_value, value)
 
 	if patch != null:
-		self.patch.set_global(variable_name, value)
+		patch.set_global(variable_name, value)
 	else:
-		self._global_variables[variable_name] = value
+		_global_variables[variable_name] = value
 
 	if !value.equals(old_value):
 		if _batch_observing_variable_changes:
 			if patch != null:
 				patch.add_changed_variable(variable_name)
-			elif self._changed_variables_for_batch_obs != null:
+			elif _changed_variables_for_batch_obs != null:
 				_changed_variables_for_batch_obs.append(variable_name)
 		else:
 			emit_signal("variable_changed", variable_name, value)
@@ -310,12 +292,10 @@ func resolve_variable_pointer(var_pointer: InkVariablePointerValue) -> InkVariab
 		context_index = get_context_index_of_variable_named(var_pointer.variable_name)
 
 	var value_of_variable_pointed_to = get_raw_variable_with_name(
-		var_pointer.variable_name, context_index
+		str(var_pointer.variable_name), context_index
 	)
 
-	var double_redirection_pointer: InkVariablePointerValue = Utils.as_or_null(
-			value_of_variable_pointed_to, "VariablePointerValue"
-	)
+	var double_redirection_pointer: InkVariablePointerValue = value_of_variable_pointed_to as InkVariablePointerValue
 
 	if double_redirection_pointer:
 		return double_redirection_pointer
@@ -340,24 +320,14 @@ var _changed_variables_for_batch_obs: InkStringSet = null
 var _list_defs_origin: InkListDefinitionsOrigin
 
 # ############################################################################ #
-# GDScript extra methods
-# ############################################################################ #
-
-func is_class(type: String) -> bool:
-	return type == "VariableState" || .is_class(type)
-
-func get_class() -> String:
-	return "VariableState"
-
-# ############################################################################ #
 # Static Properties
 # ############################################################################ #
 
-var _json: InkStaticJSON setget , get_json
+var _json: InkStaticJSON: get = get_json
 func get_json():
-	return self._ink_runtime.json
+	return _ink_runtime.json
 
-var _ink_runtime setget , get_ink_runtime
+var _ink_runtime : get = get_ink_runtime
 func get_ink_runtime():
 	return _weak_ink_runtime.get_ref()
 var _weak_ink_runtime: WeakRef
@@ -365,7 +335,7 @@ var _weak_ink_runtime: WeakRef
 func find_static_objects():
 	var ink_runtime = Engine.get_main_loop().root.get_node("__InkRuntime")
 
-	Utils.__assert__(
+	InkUtils.__assert__(
 			ink_runtime != null,
 			"Could not retrieve 'InkRuntime' singleton from the scene tree."
 	)

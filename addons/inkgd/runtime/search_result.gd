@@ -1,4 +1,3 @@
-# warning-ignore-all:unused_class_variable
 # ############################################################################ #
 # Copyright © 2015-2021 inkle Ltd.
 # Copyright © 2019-2022 Frédéric Maquin <fred@ephread.com>
@@ -20,31 +19,14 @@ extends InkBase
 class_name InkSearchResult
 
 # ############################################################################ #
-# Self-reference
-# ############################################################################ #
 
-static func SearchResult() -> GDScript:
-	return load("res://addons/inkgd/runtime/search_result.gd") as GDScript
-
-# ############################################################################ #
-
-var obj = null # InkObject
+var obj: InkObject = null
 var approximate = false # bool
 
-var correct_obj setget , get_correct_obj # InkObject
+var correct_obj: InkObject: get = get_correct_obj
 func get_correct_obj():
 	return null if approximate else obj
 
-var container setget , get_container # Container
+var container: InkContainer: get = get_container
 func get_container():
-	return Utils.as_or_null(obj, "InkContainer")
-
-# ############################################################################ #
-# GDScript extra methods
-# ############################################################################ #
-
-func is_class(type: String) -> bool:
-	return type == "SearchResult" || .is_class(type)
-
-func get_class() -> String:
-	return "SearchResult"
+	return obj as InkContainer
