@@ -40,7 +40,6 @@ const USE_SIGNALS = true
 # ############################################################################ #
 
 var _current_choice_container: ChoiceContainer
-var _profiler: InkGDProfiler = InkGDProfiler.new()
 
 # InkPlayer is created through the factory so that it returns the appropriate
 # node depending on whether the project is using Mono or not.
@@ -73,7 +72,6 @@ func _ready():
 
 	_connect_signals()
 
-	_profiler.start()
 	_ink_player.create_story()
 
 
@@ -102,9 +100,6 @@ func _continue_story():
 func _loaded(successfully: bool):
 	if !successfully:
 		return
-
-	_profiler.stop()
-	print("Created The Intercept in %d ms." % _profiler.milliseconds_elaspsed)
 
 	_bind_externals()
 	_evaluate_functions()
